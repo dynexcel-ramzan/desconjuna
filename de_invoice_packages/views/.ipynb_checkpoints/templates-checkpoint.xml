@@ -1,0 +1,15 @@
+<odoo>
+    <template id="report_invoice_with_payments_inherit" inherit_id="account.report_invoice_document">
+        <xpath expr="/t/t/div/table/thead/tr/th[2]" position="after">
+        <th class="text-center">
+            <span>Package</span>
+        </th>
+    </xpath>
+    <xpath expr="/t/t/div/table/tbody/tr/td[2]" position="after">
+        <td class="text-right">
+            <span t-field="l.package_id"/>
+        </td>
+    </xpath>
+        
+    </template>
+</odoo>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<!--    <data>-->
+    <record id="paperformat_mo_wise_so_portrait" model="report.paperformat">
+        <field name="name">PF MO wise SO Portrait</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">10</field>
+        <field name="margin_bottom">15</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">3</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_mo_wise_so_report" model="ir.actions.report">
+        <field name="name">MO Wise SO Report</field>
+        <field name="model">sale.order</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">de_mo_wise_so_report.report_mo_wise_so_document</field>
+    </record>
+<!--    <report-->
+<!--        id="action_mo_wise_so_report"-->
+<!--        string="MO Wise SO Report"-->
+<!--        model="sale.order"-->
+<!--        report_type="qweb-pdf"-->
+<!--        file="de_mo_wise_so_report.report_mo_wise_so_document"-->
+<!--        name="de_mo_wise_so_report.report_mo_wise_so_document"-->
+<!--        print_report_name="'SO Processed - %s' % (object.name)"-->
+<!--    />-->
+<!--    </data> -->
+</odoo>

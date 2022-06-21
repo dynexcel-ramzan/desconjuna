@@ -1,0 +1,53 @@
+<odoo>
+    <data>
+        <record id="inherit_tree_view_sale_quotation" model="ir.ui.view">
+          <field name="name">Sale Order</field>
+          <field name="model">sale.order</field>
+          <field name="inherit_id" ref="sale.view_quotation_tree"/>
+          <field name="arch" type="xml">
+              <field name="user_id" position="after">
+                  <field name="sale_person"/>
+              </field>
+          </field>
+      </record>
+      <!--End sale quotation tree view-->
+      <!--Sale Order Form View-->
+      <record id="inherit_form_view_sale_order" model="ir.ui.view">
+          <field name="name">inherit.form.view.sale.order</field>
+          <field name="model">sale.order</field>
+          <field name="inherit_id" ref="sale.view_order_form"/>
+          <field name="arch" type="xml">
+              <field name="payment_term_id" position="after">
+                  <field name="sale_person"/>
+              </field>
+            </field>
+      </record>
+      <!--End form view-->
+      <!--Sale Quotation tree view-->
+      <record id="tree_view_sale_quotation_inherit" model="ir.ui.view">
+            <field name="name">Sale Order</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_id']" position="attributes">
+                  <attribute name="invisible">1</attribute>
+              </xpath>
+            </field>
+        </record>
+      <!--End Sale quotation view-->
+      <!--Sale Order Tree View-->
+      <record id="inherit_sale_order_tree_view" model="ir.ui.view">
+          <field name="name">inherit.sale.order.tree.view</field>
+          <field name="model">sale.order</field>
+          <field name="inherit_id" ref="sale.view_order_tree"/>
+          <field name="arch" type="xml">
+              <xpath expr="//field[@name='user_id']" position="attributes">
+                  <attribute name="invisible">1</attribute>
+              </xpath>
+              <field name="partner_id" position="after">
+                  <field name="sale_person"/>
+              </field>
+          </field>
+      </record>
+    </data>
+</odoo>

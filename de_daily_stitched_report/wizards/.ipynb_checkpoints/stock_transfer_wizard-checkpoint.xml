@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_stock_transfer_wizard" model="ir.ui.view">
+            <field name="name">stock.transfer.wizard</field>
+            <field name="model">stock.transfer.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <field name="date_after"/>
+                    </group>
+                </form>
+                <footer>
+                    <button name="print_production_pdf"
+                            string="Production PDF"
+                            type="object"
+                            class="oe_highlight"/>
+                </footer>
+            </field>
+        </record>
+
+        <record id="action_stock_transfer_wizard" model="ir.actions.act_window">
+            <field name="name">Detailed Information</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">stock.transfer.wizard</field>
+            <field name="view_id" ref="view_stock_transfer_wizard"/>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+    </data>
+</odoo>

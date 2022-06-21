@@ -1,0 +1,13 @@
+<odoo>
+  <data>
+        <report
+            id="sale_status_report_action"
+            string="Sale Order Status"
+            model="report.de_sale_order_status_report.sale_status_report_pdf"
+            report_type="qweb-pdf"
+            file="de_sale_order_status_report.sale_status_report_pdf"
+            name="de_sale_order_status_report.sale_status_report_pdf"
+        />
+
+  </data>
+</odoo>

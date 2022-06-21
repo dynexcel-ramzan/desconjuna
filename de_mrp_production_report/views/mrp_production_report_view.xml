@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="mrp_view_production_pivot_inherited" model="ir.ui.view">
+         <field name="name">mrp.view.production.pivot.inherited</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.view_production_pivot"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_qty']" position="after">
+                <field name="tot_consume_qty" type="measure" />
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

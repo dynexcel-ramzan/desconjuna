@@ -1,0 +1,429 @@
+<odoo>
+    <template id="greige_process_report_pdf">
+      <t t-call="web.html_container">
+          <t t-foreach="docs" t-as="docs">
+              <div class="article o_report_layout_standard" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id">
+                  <div class="page">
+                      <h3 style=" text-align: center">Lot Wise Processing Report</h3>
+                      <br/>
+                      <t t-if="from_stock_ids and not owner_from_stock_ids and not owner_stock_ids">
+                      <div class="row">
+                          <table style="width:100%; border: 1px solid black;">
+                              <thead>
+                                  <tr>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">L.Rec Date:</th>
+                                      <th style="width:15%; border: 1px solid black; padding-left: 5px;">Owner:</th>
+                                      <th style="width:7%; border: 1px solid black; padding-left: 5px;">Lot No:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Rec:</th>
+                                      <th style="width:30%; border: 1px solid black; padding-left: 5px;">MO#:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">G. Used:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">P.MO:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Proces:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">F.MO:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Fold:</th>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">Balance:</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+
+                                  <t t-set="sum_lot_name" t-value="[]"/>
+                                  <t t-set="sum_same_lot_qty" t-value="0"/>
+                                  <t t-set="tot_gre_rec_qty" t-value="0"/>
+                                  <t t-set="total_gre_used_qty" t-value="0"/>
+                                  <t t-set="total_proces_qty" t-value="0"/>
+                                  <t t-set="total_finish_qty" t-value="0"/>
+                                  <t t-set="total_balance_qty" t-value="0"/>
+                                  <t t-foreach="from_stock_ids.sorted(key=lambda a: (a.lot_id.name, a.date))" t-as="from_stock">
+                                      <t t-set="lot_rec_date" t-value="0"/>
+                                      <t t-set="same_lot_qty" t-value="0"/>
+                                      <t t-set="owner_name" t-value="0"/>
+                                      <t t-set="mo_ref" t-value="0"/>
+                                      <t t-set="mo_num_qty" t-value="0"/>
+                                      <t t-set="proc_mo_num_qty" t-value="0"/>
+                                      <t t-set="finish_mo_num_qty" t-value="0"/>
+                                      <t t-set="gre_balance_qty" t-value="0"/>
+                                      <t t-set="process_balance_qty" t-value="0"/>
+                                      <t t-set="balance_qty" t-value="0"/>
+<!--                                       Same lot Quantity and last receiving date section -->
+                                      <t t-foreach="from_stock_ids.sorted(key=lambda b: b.lot_id.name)" t-as="from_stock_lot">
+                                          <t t-if="from_stock_lot.lot_id.name == from_stock.lot_id.name">
+                                              <t t-set="same_lot_qty" t-value="same_lot_qty+from_stock_lot.qty_done"/>
+                                              <t t-set="lot_rec_date" t-value="from_stock_lot.date "/>
+                                              <t t-set="owner_name" t-value="from_stock_lot.owner_id.name"/>
+                                          </t>
+
+                                      </t>
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('product_id.categ_id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+                                          <t t-set="mo_num_qty" t-value="mo_num_qty + mo_num.qty_done"/>
+
+                                      </t>
+<!--                                       Process Mo Quanity Start -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', from_stock.lot_id.name), ('product_id.categ_id','=', 238), ('location_dest_id','=', 7), ('state','=', 'done')])" t-as="process_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="proc_mo_num_qty" t-value="proc_mo_num_qty + process_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+                                       <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', from_stock.lot_id.name), ('product_id.categ_id','=', 235), ('location_dest_id','=', 19), ('state','=', 'done')])" t-as="finish_mo_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="finish_mo_num_qty" t-value="finish_mo_num_qty + finish_mo_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+<!--                                       Finish Mo Quanity End -->
+<!--                                       <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('location_dest_id','=', 7)])" t-as="mo_num">
+                                          <t t-set="mo_ref" t-value="mo_num.reference"/>
+                                          <t t-set="mo_ref_qty" t-value="mo_ref_qty + mo_num.qty_done"/>
+                                      </t> -->
+<!--                                       Same lot Quantity and last receiving date section End -->
+
+
+
+<!--                                       <t t-set="lot_rec_date" t-value="from_stock.date"/> -->
+                                      <t t-if="sum_lot_name != from_stock.lot_id.name">
+                                          <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                               <td>
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', from_stock.lot_id.name), ('product_id.categ_id','=', 238), ('location_dest_id','=', 7), ('state','=', 'done')])" t-as="process_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-esc="process_num.reference"/>
+<!--                                           </t> -->
+                                      </t>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(proc_mo_num_qty)"/>
+                                                  <t t-set="total_proces_qty" t-value="total_proces_qty + proc_mo_num_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', from_stock.lot_id.name), ('product_id.categ_id','=', 235), ('location_dest_id','=', 19), ('state','=', 'done')])" t-as="finish_mo_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-esc="finish_mo_num.reference"/>
+<!--                                           </t> -->
+                                      </t>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(finish_mo_num_qty)"/>
+                                                  <t t-set="total_finish_qty" t-value="total_finish_qty + finish_mo_num_qty"/>
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+                                                  <t t-set="balance_qty" t-value="(same_lot_qty - mo_num_qty) + (proc_mo_num_qty - finish_mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                     </t>
+                                      <t t-set="sum_lot_name" t-value="from_stock.lot_id.name"/>
+
+                                  </t>
+                                  <tr style="border: 1px solid black;">
+                                      <td colspan="3"><strong>Total:</strong></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(tot_gre_rec_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(total_gre_used_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(total_proces_qty)"/></td>
+                                      <td ><t t-esc="'{0:,.2f}'.format(total_finish_qty)"/></td>
+                                      <td style="padding-left:3px;"><t t-esc="'{0:,.2f}'.format(total_balance_qty)"/></td>
+                                  </tr>
+                              </tbody>
+
+
+                          </table>
+                      </div>
+                      </t>
+                      <t t-if="owner_from_stock_ids and from_stock_ids">
+                        <div class="row">
+                           <table style="width:100%; border: 1px solid black;">
+                               <thead>
+                                  <tr>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">L.Rec Date:</th>
+                                      <th style="width:15%; border: 1px solid black; padding-left: 5px;">Owner:</th>
+                                      <th style="width:7%; border: 1px solid black; padding-left: 5px;">Lot No:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Rec:</th>
+                                      <th style="width:30%; border: 1px solid black; padding-left: 5px;">MO#:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">G. Used:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">P.MO:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Proces:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">F.MO:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Fold:</th>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">Balance:</th>
+                                  </tr>
+                               </thead>
+                               <tbody>
+                                  <t t-set="sum_lot_name" t-value="[]"/>
+                                  <t t-set="sum_same_lot_qty" t-value="0"/>
+                                  <t t-set="tot_gre_rec_qty" t-value="0"/>
+                                  <t t-set="total_gre_used_qty" t-value="0"/>
+                                  <t t-set="total_proces_qty" t-value="0"/>
+                                  <t t-set="total_finish_qty" t-value="0"/>
+                                  <t t-set="total_balance_qty" t-value="0"/>
+                                   <t t-foreach="owner_from_stock_ids.sorted(key=lambda a: a.lot_id.name)" t-as="owner_from_stock">
+                                      <t t-set="lot_rec_date" t-value="0"/>
+                                      <t t-set="same_lot_qty" t-value="0"/>
+                                      <t t-set="owner_name" t-value="0"/>
+                                      <t t-set="mo_ref" t-value="0"/>
+                                      <t t-set="mo_num_qty" t-value="0"/>
+                                      <t t-set="proc_mo_num_qty" t-value="0"/>
+                                      <t t-set="finish_mo_num_qty" t-value="0"/>
+                                      <t t-set="balance_qty" t-value="0"/>
+                                       <t t-foreach="owner_from_stock_ids.sorted(key=lambda b: b.lot_id.name)" t-as="in_owner_from_stock">
+                                           <t t-if="in_owner_from_stock.lot_id.name == owner_from_stock.lot_id.name">
+                                              <t t-set="same_lot_qty" t-value="same_lot_qty+in_owner_from_stock.qty_done"/>
+                                              <t t-set="lot_rec_date" t-value="in_owner_from_stock.date "/>
+                                          </t>
+                                       </t>
+                                       <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('product_id.categ_id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+                                          <t t-set="mo_num_qty" t-value="mo_num_qty + mo_num.qty_done"/>
+                                      </t>
+
+<!--                                             Process Mo Quanity Start -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', owner_from_stock.lot_id.name), ('product_id.categ_id','=', 238), ('location_dest_id','=', 7), ('state','=', 'done')])" t-as="process_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="proc_mo_num_qty" t-value="proc_mo_num_qty + process_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+                                       <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', owner_from_stock.lot_id.name), ('product_id.categ_id','=', 235), ('location_dest_id','=', 19), ('state','=', 'done')])" t-as="finish_mo_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="finish_mo_num_qty" t-value="finish_mo_num_qty + finish_mo_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+                                        <t t-if="sum_lot_name != owner_from_stock.lot_id.name">
+
+                                       <tr>
+                                           <td style="width:10%; padding-left:5px;">
+                                               <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                               <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                               <t t-esc="date"/>
+                                           </td>
+                                           <td style="width:15%; padding-left:5px;">
+                                               <t t-esc="owner_from_stock.owner_id.name"/>
+                                           </td>
+                                           <td style="width:6%; padding-left:5px;">
+                                               <t t-esc="owner_from_stock.lot_id.name"/>
+                                           </td>
+                                           <td style="width:8%; padding-left:5px;">
+                                               <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                               <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                           </td>
+                                           <td style="width:38%; padding-left:5px;">
+                                               <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('product_id.categ_id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+                                                   <t t-esc="mo_num.reference"/>,
+                                               </t>
+                                           </td>
+                                           <td style="width:10%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                           </td>
+                                           <td>
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', owner_from_stock.lot_id.name), ('product_id.categ_id','=', 238), ('location_dest_id','=', 7), ('state','=', 'done')])" t-as="process_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-esc="process_num.reference"/>
+<!--                                           </t> -->
+                                      </t>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(proc_mo_num_qty)"/>
+                                                  <t t-set="total_proces_qty" t-value="total_proces_qty + proc_mo_num_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', owner_from_stock.lot_id.name), ('product_id.categ_id','=', 235), ('location_dest_id','=', 19), ('state','=', 'done')])" t-as="finish_mo_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-esc="finish_mo_num.reference"/>
+<!--                                           </t> -->
+                                      </t>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(finish_mo_num_qty)"/>
+                                                  <t t-set="total_finish_qty" t-value="total_finish_qty + finish_mo_num_qty"/>
+                                              </td>
+                                           <td style="width:10%; padding-left:5px;">
+                                                  <t t-set="balance_qty" t-value="(same_lot_qty - mo_num_qty) + (proc_mo_num_qty - finish_mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                           </td>
+                                       </tr>
+                                            <t t-set="sum_lot_name" t-value="owner_from_stock.lot_id.name"/>
+
+                                  </t>
+                                   </t>
+                                   <tr style="border: 1px solid black;">
+                                      <td colspan="3"><strong>Total:</strong></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(tot_gre_rec_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(total_gre_used_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(total_proces_qty)"/></td>
+                                      <td ><t t-esc="'{0:,.2f}'.format(total_finish_qty)"/></td>
+                                      <td style="padding-left:3px;"><t t-esc="'{0:,.2f}'.format(total_balance_qty)"/></td>
+                                  </tr>
+                               </tbody>
+                            </table>
+                        </div>
+                      </t>
+                      <t t-if="owner_stock_ids and not from_stock_ids">
+                          <div class="row">
+                          <table style="width:100%; border: 1px solid black;">
+                              <thead>
+                                  <tr>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">L.Rec Date:</th>
+                                      <th style="width:15%; border: 1px solid black; padding-left: 5px;">Owner:</th>
+                                      <th style="width:7%; border: 1px solid black; padding-left: 5px;">Lot No:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Rec:</th>
+                                      <th style="width:30%; border: 1px solid black; padding-left: 5px;">MO#:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">G. Used:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">P.MO:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Proces:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">F.MO:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Fold:</th>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">Balance:</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+
+                                  <t t-set="sum_lot_name" t-value="[]"/>
+                                  <t t-set="sum_same_lot_qty" t-value="0"/>
+                                  <t t-set="tot_gre_rec_qty" t-value="0"/>
+                                  <t t-set="total_gre_used_qty" t-value="0"/>
+                                  <t t-set="total_proces_qty" t-value="0"/>
+                                  <t t-set="total_finish_qty" t-value="0"/>
+                                  <t t-set="total_balance_qty" t-value="0"/>
+                                  <t t-foreach="owner_stock_ids.sorted(key=lambda a: a.lot_id.name)" t-as="from_stock">
+                                      <t t-set="lot_rec_date" t-value="0"/>
+                                      <t t-set="same_lot_qty" t-value="0"/>
+                                      <t t-set="owner_name" t-value="0"/>
+                                      <t t-set="mo_ref" t-value="0"/>
+                                      <t t-set="mo_num_qty" t-value="0"/>
+                                      <t t-set="proc_mo_num_qty" t-value="0"/>
+                                      <t t-set="finish_mo_num_qty" t-value="0"/>
+                                      <t t-set="balance_qty" t-value="0"/>
+<!--                                       Same lot Quantity and last receiving date section -->
+                                      <t t-foreach="owner_stock_ids.sorted(key=lambda b: b.lot_id.name)" t-as="from_stock_lot">
+                                          <t t-if="from_stock_lot.lot_id.name == from_stock.lot_id.name">
+                                              <t t-set="same_lot_qty" t-value="same_lot_qty+from_stock_lot.qty_done"/>
+                                              <t t-set="lot_rec_date" t-value="from_stock_lot.date "/>
+                                              <t t-set="owner_name" t-value="from_stock_lot.owner_id.name"/>
+                                          </t>
+
+                                      </t>
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('product_id.categ_id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+                                          <t t-set="mo_num_qty" t-value="mo_num_qty + mo_num.qty_done"/>
+                                      </t>
+
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', from_stock.lot_id.name), ('product_id.categ_id','=', 238), ('location_dest_id','=', 7), ('state','=', 'done')])" t-as="process_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="proc_mo_num_qty" t-value="proc_mo_num_qty + process_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+                                       <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', from_stock.lot_id.name), ('product_id.categ_id','=', 235), ('location_dest_id','=', 19), ('state','=', 'done')])" t-as="finish_mo_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="finish_mo_num_qty" t-value="finish_mo_num_qty + finish_mo_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+
+
+<!--                                       <t t-set="lot_rec_date" t-value="from_stock.date"/> -->
+                                      <t t-if="sum_lot_name != from_stock.lot_id.name">
+                                          <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                              <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('product_id.categ_id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:10%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td>
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', from_stock.lot_id.name), ('product_id.categ_id','=', 238), ('location_dest_id','=', 7), ('state','=', 'done')])" t-as="process_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-esc="process_num.reference"/>
+<!--                                           </t> -->
+                                      </t>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(proc_mo_num_qty)"/>
+                                                  <t t-set="total_proces_qty" t-value="total_proces_qty + proc_mo_num_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id.name','=', from_stock.lot_id.name), ('product_id.categ_id','=', 235), ('location_dest_id','=', 19), ('state','=', 'done')])" t-as="finish_mo_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-esc="finish_mo_num.reference"/>
+<!--                                           </t> -->
+                                      </t>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(finish_mo_num_qty)"/>
+                                                  <t t-set="total_finish_qty" t-value="total_finish_qty + finish_mo_num_qty"/>
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+                                                  <t t-set="balance_qty" t-value="(same_lot_qty - mo_num_qty) + (proc_mo_num_qty - finish_mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                     </t>
+                                      <t t-set="sum_lot_name" t-value="from_stock.lot_id.name"/>
+
+                                  </t>
+                                  <tr style="border: 1px solid black;">
+                                      <td colspan="3"><strong>Total:</strong></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(tot_gre_rec_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(total_gre_used_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(total_proces_qty)"/></td>
+                                      <td ><t t-esc="'{0:,.2f}'.format(total_finish_qty)"/></td>
+                                      <td style="padding-left:3px;"><t t-esc="'{0:,.2f}'.format(total_balance_qty)"/></td>
+                                  </tr>
+                              </tbody>
+
+
+                          </table>
+                      </div>
+
+                      </t>
+
+
+                  </div>
+              </div>
+          </t>
+      </t>
+    </template>
+</odoo>

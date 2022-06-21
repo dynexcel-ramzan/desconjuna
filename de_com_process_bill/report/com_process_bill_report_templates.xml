@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_com_process_bill_document">
+        <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="row">
+                      <div class="col-7" style="float:left; text-align:right;">
+                        <b style="font-size:20px;">Processing Bill</b>
+                      </div>
+                      <div class="col-5" style="float:left; position:relative; text-align:right; font-size:15px;">
+                        <strong>(For Company Use Only)</strong>
+                      </div>
+                    </div>
+                    <div class="row" style="margin-top:5px;">
+                      <div class="col-9">
+                        <strong>Bill To Party</strong>
+                        <p class="m-0" t-field="doc.partner_id"/>
+                      </div>
+                      <div class="col-3">
+                        <table>
+                          <tr>
+                            <th>Bill No.</th>
+                            <td><span t-field="doc.number"/></td>
+                          </tr>
+                          <tr>
+                            <th>Date</th>
+                            <td><span t-field="doc.date_invoice" t-options="{'format': 'dd/MM/yyyy'}"/></td>
+                          </tr>
+                        </table>
+                      </div>
+                    </div>
+                    <div class="row" style="margin-top:5px;">
+                      <div class="col-3">
+                        <strong>Sale Order:</strong>
+                        <p class="m-0" t-field="doc.origin"/>
+                      </div>
+                      <div class="col-3">
+                        <strong>Reference/Description:</strong>
+                        <p class="m-0" t-field="doc.name"/>
+                      </div>
+                      <div class="col-3">
+                        <t t-foreach="request.env['sale.order'].search([('name','=', doc.origin)])" t-as="sale_order">
+                          <strong>Party PO:</strong>
+                          <p class="m-0" t-field="sale_order.party_po"/>
+                        </t>
+                      </div>
+                    </div>
+                    <t t-set="sum_qty" t-value="0"/>
+                    <div class="row" style="margin-top:10px;">
+                      <table class="" style="width:100%;">
+                        <thead>
+                          <tr style="border:1px solid black;">
+                            <!--<th style="width:5%; padding: 5px;">Sr#</th>-->
+                            <th style="width:37%; padding: 4px; text-align: left; border-right: 1px solid black;">Description</th>
+                            <th style="width:10%; padding: 4px; text-align: left; border-right: 1px solid black;">Packing</th>
+                            <!--<th style="width:5%; padding: 4px;">P.Qty</th>-->
+                            <th style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">Width</th>
+                            <th style="width:5%; padding: 4px; text-align: left; border-right: 1px solid black;">Dyed/White</th>
+                            <th style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">Colour</th>
+                            <th style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">Shades</th>
+                            <!--<th>Shades</th>-->
+                            <!--S Dynamic Print tags columns-->
+                            <!--<t t-set="tags" t-value="[]"/>-->
+                            <!--<t t-foreach="doc.invoice_line_ids" t-as="inv_line">-->
+                            <!--    <t t-foreach="inv_line.analytic_tag_ids" t-as="t">-->
+                            <!--        <t t-set="tags" t-value="tags+[t]"/>-->
+                            <!--    </t>-->
+                            <!--</t>-->
+                            <!--<t t-foreach="set(tags)" t-as="t">-->
+                            <!--  <th style="width:6%; padding: 5px;"><span t-field="t.name"/></th>-->
+                            <!--</t>-->
+                            <!--end-->
+                            <th style="width:10%; padding: 4px; text-align: left; border-right: 1px solid black;">MTR</th>
+                            <th style="width:7%; padding: 4px; text-align: left; border-right: 1px solid black;">Rate/Inch</th>
+                            <th style="width:10%; padding: 4px; text-align: left; border-right: 1px solid black;">Rate / M</th>
+                            <!--<th>Taxes</th>-->
+                            <th style="width:10%; padding: 4px; text-align: left; border-right: 1px solid black;">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody style="border:1px solid black;">
+                          <t t-set="index" t-value="1"/>
+                          <!--<t t-set="sum_qty" t-value="0"/>-->
+                          <t t-set="sum_product_name" t-value="0"/>
+                          <t t-set="pr_width" t-value="0"/>
+                          <t t-set="ppi_rate" t-value="0"/>
+                          <t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: x.name, reverse=True)" t-as="line">
+                            <t t-set="sum_qty_line" t-value="0"/>
+                            <t t-set="sum_price_subtotal" t-value="0"/>
+                            <t t-set="sum_qty" t-value="sum_qty + line.quantity"/>
+                            <t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: x.name, reverse=True)" t-as="l">
+                              <t t-if="line.name == l.name">
+                                <t t-set="sum_qty_line" t-value="sum_qty_line + l.quantity"/>
+                                <t t-set="sum_price_subtotal" t-value="sum_price_subtotal + l.price_subtotal"/>
+                              </t>
+                            </t>
+                            <t t-if="line.name != sum_product_name">
+                            <tr>
+                              <!--<td style="width:5%; padding: 1px; text-align:center;">-->
+                              <!--  <t t-esc="index"/>-->
+                              <!--  <t t-set="index" t-value="index+1"/>-->
+                              <!--</td>-->
+                              <td style="width:37%; padding: 4px; text-align: left; border-right: 1px solid black;"><span t-field="line.name"/></td>
+                              <td style="width:10%; padding: 4px; text-align: right; border-right: 1px solid black;"><span t-field="line.package_id.packing_quantity" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span t-field="line.package_id.packing_type" style="margin-left:3px;"/></td>
+                              <!--<td style="width:5%; padding: 4px;"><span t-field="line.package_id.packing_quantity"/></td>-->
+                              <td style="width:6%; padding: 4px; text-align: right; border-right: 1px solid black;"><span t-field="line.product_id.product_width" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/></td>
+                              <!--Dyed White tag-->
+                            <td style="width:5%; padding: 4px; text-align: left; border-right: 1px solid black;">
+                              <t t-foreach="line.analytic_tag_ids" t-as="tag">
+                                <t t-if="tag.name == 'White'">
+                                  <span t-esc="tag.name"/>
+                                </t>
+                                <t t-if="tag.name in ('Reactive', 'Dyed', 'Direct', 'VAT')">
+                                  <span t-esc="tag.name"/>
+                                </t>
+                              </t>
+                            </td>
+                             <!--End-->
+                            <td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;"><span t-field="line.product_id.attribute_value_ids.name"/></td>
+                            <td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">
+                              <!--tag not in dyed or white-->
+                              <t t-foreach="line.analytic_tag_ids" t-as="tags">
+                                <t t-if="not tags.name in ('White', 'Dyed')">
+                                  <span t-esc="tags.name"/>
+                                </t>
+                                <!--<t t-if="tags.name != 'Dyed'">-->
+                                <!--  <span t-esc="tags.name"/>-->
+                                <!--</t>-->
+                              </t>
+                            </td>
+                            <!--End-->
+                              <!--<td style="width:12%;"><span t-field="line.analytic_tag_ids"/></td>-->
+                              <td style="width:10%; padding: 4px; text-align: right; border-right: 1px solid black;">
+                                <span t-esc="sum_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <t t-if="line.product_id.product_width > 0" t-set="ppi_rate" t-value="line.price_unit/int(line.product_id.product_width)"/>
+                              </td>
+                                <td style="padding: 4px; text-align: right; border-right: 1px solid black;">
+                                  <t t-if="line.package_id.shipping_grade == 'fresh'">
+                                    <t t-esc="'%.2f'% ppi_rate"/>
+                                  </t>
+                                  <t t-if="line.package_id.shipping_grade != 'fresh'">
+                                    <t t-esc="'%.2f'% 0.00"/>
+                                  </t>
+                                </td>
+                              <td style="width:10%; padding: 4px; text-align: right; border-right: 1px solid black;">
+                                <span t-field="line.price_unit" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+
+                                <!--<t t-if="not pr_width_3" t-set="ppi_rate_2" t-value="line.price_unit/int(pr_width_2)"/>-->
+                                 <!--<t t-if="not pr_width_2" t-set="ppi_rate_3" t-value="line.price_unit/int(pr_width_3)"/>-->
+                              </td>
+                              <!--<td><span t-field="line.invoice_line_tax_ids"/></td>-->
+                              <td style="width:10%; padding: 4px; text-align: right; border-right: 1px solid black;"><span t-esc="'%.2f'% sum_price_subtotal"/></td>
+                            </tr>
+                            </t>
+                            <t t-set="sum_product_name" t-value="line.name"/>
+                          </t>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div class="row" style="position: absolute; margin-top:200px;">
+                      <table style="width:100%;">
+                          <tr>
+                            <td style="width:78%;"><strong>Total Invoice Quantity:</strong></td>
+                            <td><t t-esc="sum_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>m</td>
+                          </tr>
+                        </table>
+                    </div>
+                    <div class="row" style="position:absolute; margin-top:240px;">
+                      <div class="col-8" style="margin-left:-12px;">
+                        <strong>Greige Details:</strong>
+                        <t t-set="sum_produced_qty" t-value="0"/>
+                        <t t-set="sum_rec_qty" t-value="0"/>
+                        <t t-set="rem_qty" t-value="0"/>
+                        <t t-foreach="request.env['mrp.production'].search([('product_id.categ_id','=', 237),('sale_id','=', doc.origin)])" t-as="production_order">
+                          <t t-foreach="production_order.finished_move_line_ids" t-as="production_line">
+                            <t t-set="sum_produced_qty" t-value="sum_produced_qty + production_line.qty_done"/>
+                          </t>
+                        </t>
+                        <t t-foreach="request.env['stock.picking'].search([('sale_tag','=', doc.origin),('move_line_ids.lot_id.cloth_desc','=', doc.origin)])" t-as="picking_ref">
+                          <t t-foreach="picking_ref.move_line_ids" t-as="move_line">
+                            <!--<t t-foreach="move_line.env['account.invoice.line'].search([('product_id.name','=', move_line.lot_id.cloth_desc)])" t-as="inv_line">-->
+                              <t t-set="sum_rec_qty" t-value="sum_rec_qty + move_line.qty_done"/>
+                          <!--</t>-->
+                          </t>
+                        </t>
+                        <t t-set="rem_qty" t-value="rem_qty + sum_rec_qty - sum_produced_qty"/>
+                        <table style="width:100%;">
+                          <tr>
+                            <td style="width:42%;"><strong>Total Greige Receipt:</strong></td>
+                            <td><t t-esc="sum_rec_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>
+                          </tr>
+                          <tr>
+                            <td style="width:42%;"><strong>Total Greige Consume/Used:</strong></td>
+                            <td><t t-esc="sum_produced_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>
+                          </tr>
+                          <tr>
+                            <td style="width:42%;"><strong>Remaining Qty:</strong></td>
+                            <td><t t-esc="rem_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>
+                          </tr>
+                          <tr>
+                            <td style="width:42%;"><strong>Amount in Words:</strong></td>
+                            <td><t t-esc="doc.amt_words"/></td>
+                          </tr>
+                        </table>
+                      </div>
+                      <div class="clearfix col-4" style="float:left; position:relative;">
+                        <!--<div class="row">-->
+                            <!--<div t-attf-class="#{'col-4' if report_type != 'html' else 'col-sm-6 col-md-6'} ml-auto">-->
+                                <table class="table table-sm">
+                                    <tr class="border-black o_subtotal" style="">
+                                        <td><strong>Subtotal</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.amount_untaxed"/>
+                                        </td>
+                                    </tr>
+                                    <t t-foreach="doc.amount_by_group" t-as="amount_by_group">
+                                        <tr>
+                                            <t t-if="len(doc.tax_line_ids) == 1 and doc.amount_untaxed == amount_by_group[2]">
+                                                <td><span t-esc="amount_by_group[0]"/></td>
+                                                <td class="text-right o_price_total">
+                                                    <span t-esc="amount_by_group[3]"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td>
+                                                    <span t-esc="amount_by_group[0]"/>
+                                                    <span>&amp;nbsp;<span>on</span>
+                                                        <t t-esc="amount_by_group[4]"/>
+                                                    </span>
+                                                </td>
+                                                <td class="text-right o_price_total">
+                                                    <span t-esc="amount_by_group[3]"/>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+                                    <tr class="border-black o_total">
+                                        <td><strong>Total</strong></td>
+                                        <td class="text-right">
+                                            <span t-field="doc.amount_total"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            <!--</div>-->
+                        <!--</div>-->
+                      </div>
+                    </div>
+                    <div class="row" style="position:absolute; margin-top:420px;">
+                      <div style="margin-top:10px;">
+                        <div style="float:left; margin-left:10px;">
+                          <span t-field="doc.create_uid.name" style="text-decoration: underline;"/>
+                          <br/>
+                          <div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Prepared By:</strong></div>
+
+                        </div>
+                        <div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Checked By:</strong></div>
+                   	</div>
+                   	<div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Verified By:</strong></div>
+                   	</div>
+                   	<div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Approved By:</strong></div>
+                   	</div>
+
+                      </div>
+                    </div>
+                    <div class="row" style="position:absolute; margin-top:490px; margin-bottom: 30px;">
+                      <div class="col-12">
+                        <strong>Note:</strong>
+                        <br/>
+                        <p>We are only responsible for any deficiency in your Finish Fabric regarding Fresh &amp; B.C.P percentage &amp; also any other claim/problem untill the fabric laying in our premisis. Please take over your BCP meters wihtin maximum 1 month from the bill date. After that we are not responsible of your BCP meters.</p>
+                      </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </t>
+    </template>
+</odoo>

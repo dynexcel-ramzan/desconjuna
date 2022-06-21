@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_packing_list_report_document">
+        <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <!--Report Title Section Start-->
+                    <div class="row">
+                      <div class="col-12" style="text-align:center; font-size:28px; font-style: italic;">
+                        <strong>PACKING LIST</strong>
+                      </div>
+                    </div>
+                    <!--Report Title Section End-->
+
+                    <!--Customer Name and Date Section Start-->
+                    <div class="row">
+                      <div class="col-9" style="font-size:18px;">
+                        <table style="width:100%;">
+                          <tr>
+                            <td style="width:23%; padding-left:5px;"><strong>Party Name:</strong></td>
+                            <td colspan="4">
+                              <!--<span t-esc="pr_name[0]"/>&#160;-->
+                              <!--<span t-esc="pr_name[1]"/>&#160;-->
+                              <span t-esc="doc.partner_id.name"/>
+                            </td>
+                          </tr>
+                          <!--  </t>-->
+                          <!--  <t t-set="sum_product_name" t-value="move_line.product_id.name"/>-->
+                          <!--</t>-->
+                        </table>
+                      </div>
+                      <div class="col-3">
+                        <span><strong>Date:</strong></span>
+                        <span><span t-esc="datetime.datetime.strptime(str(doc.invoice_date), '%Y-%m-%d').strftime('%d-%b-%Y')"/></span>
+                      </div>
+                    </div>
+                    <!--Customer Name and Date Section End-->
+
+                    <!--Line Item Table Start-->
+                    <div class="row">
+                      <div class="col-12">
+                        <table style="width:100%; border:1px solid black;">
+                          <thead>
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Sr.No.</th>
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Quality</th>
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Width</th>
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Color</th>
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Description</th>
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Package</th>
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Lot NO.</th>
+                            <!--<th style="border:1px solid black;">Shade</th>-->
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Quantity</th>
+                            <th style="border:1px solid black; text-align:center; padding:3px;">Delivery</th>
+                          </thead>
+                          <tbody>
+                            <t t-set="index" t-value="0"/>
+                            <t t-set="same_package" t-value="0"/>
+                            <t t-set="p_name" t-value="0"/>
+                            <t t-set="pr_name" t-value="0"/>
+                            <t t-set="prd_name" t-value="0"/>
+                            <t t-set="prd_width" t-value="0"/>
+                            <t t-set="tot_qty" t-value="0"/>
+                            <t t-set="lot_no" t-value="0"/>
+                            <t t-set="packg_id" t-value="0"/>
+                            <t t-set="pacakge_quantity" t-value="0"/>
+                            <t t-set="fresh_package_qty" t-value="0"/>
+                            <t t-set="bgrade_package_qty" t-value="0"/>
+                            <t t-set="sacut_piece_package_qty" t-value="0"/>
+                            <t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: x.product_id, reverse=True)" t-as="line">
+                              <t t-foreach="request.env['stock.move.line'].sudo().search([('package_id','=', line.package_id.id), ('origin','=', doc.invoice_origin)])" t-as="delivery">
+                                  <t t-set="lot_no" t-value="delivery.lot_id.name"/>
+                                  <t t-if="delivery.package_id" t-set="pacakge_quantity" t-value="delivery.qty_done"/>
+                                  <t t-set="packg_id" t-value="delivery.package_id.id"/>
+                              </t>
+                              <!--<t t-foreach="request.env['stock.quant.package'].sudo().search([('id','=', line.package_id.id)])" t-as="package">-->
+                              <!--  <t t-if="package.quant_ids">-->
+                              <!--    <t t-foreach="package.quant_ids" t-as="package_line">-->
+                              <!--      <t t-if="line.product_id">-->
+                              <!--        <t t-set="lot_no" t-value="package_line.lot_id.name"/>-->
+                              <!--        <t t-set="pacakge_quantity" t-value="package_line.quantity"/>-->
+                              <!--      </t>-->
+                              <!--    </t>-->
+                              <!--  </t>-->
+
+                              <!--</t>-->
+                              <t t-if="line.product_id">
+                                <tr>
+                                  <td>
+                                    <t t-set="index" t-value="index+1"/>
+                                    <t t-esc="index"/>
+                                  </td>
+                                  <td>
+                                    <t t-set="p_name" t-value="str(line.product_id.name)"/>
+                                      <!--<t t-set="pr_name" t-value="p_name.split(' ')"/>-->
+                                      <!--<t t-esc="pr_name"/>-->
+                                      <!--<t t-esc="pr_name[0]"/><t t-esc="pr_name[1]"/>-->
+                                      <!--<t t-esc="p_name"/>-->
+
+
+                                      <!--<t t-esc="prd_name[0]"/>-->
+                                      <!--<t t-esc="prd_name[1]"/>-->
+                                      <t t-set="p_name" t-value="p_name.replace(' ' , ',')"/>
+                                      <t t-set="pr_name" t-value="p_name.split(',')"/>
+                                      <!--<t t-esc="pr_name"/>-->
+                                      <t t-set="count" t-value="0"/>
+                                      <t t-foreach="pr_name" t-as="p">
+                                        <t t-set="count" t-value="count+1"/>
+                                      </t>
+                                      <span t-esc="pr_name[0]"/>&#160;
+                                      <span t-if="count &gt; 1" t-esc="pr_name[1]"/>&#160;
+                                      <t t-if="count &gt; 1" t-set="prd_width" t-value="pr_name[2]"/>&#160;
+                                  </td>
+                                  <td>
+                                    <span t-esc="prd_width"/>
+                                  </td>
+                                  <td>
+                                    <span t-esc="line.product_id.product_template_attribute_value_ids.name"/>
+                                  </td>
+                                  <td>
+                                    <span t-esc="'%.0f'% line.package_id.packing_quantity"/><span t-esc="line.package_id.packing_type"/>
+                                  </td>
+                                  <td>
+                                    <span t-esc="line.package_id.name"/>/<span t-if="line.package_id.shipping_grade == 'fresh'">Fresh</span><span t-if="line.package_id.shipping_grade == 'b'">B-Grade</span><span t-if="line.package_id.shipping_grade == 'c'">Cut Piece</span>
+                                  </td>
+                                  <td>
+                                    <span t-esc="lot_no"/>
+                                  </td>
+                                  <td>
+                                    <!--<span t-if="packg_id" t-esc="'%.2f'% pacakge_quantity"/>-->
+                                    <span t-esc="'%.2f'% line.package_id.shipping_quantity"/>
+                                  </td>
+                                  <td>
+                                    <t t-if="packg_id == line.package_id.id">
+                                      <span>Delivered</span>
+                                    </t>
+                                    <t t-if="not packg_id == line.package_id.id">
+                                      <span>Un-Delivered</span>
+                                    </t>
+                                  </td>
+                                </tr>
+                              </t>
+                            </t>
+                          </tbody>
+                          </table>
+                          </div>
+                    </div>
+                    <!--Line Item Table End-->
+                    <!--Sum Fresh, B-Grade and Cut Piece Qty Section Start-->
+                    <div class="row" style="margin-top:10px;">
+                      <div class="col-3">
+                        <span><strong>Fresh</strong></span>
+                      </div>
+                      <div class="col-3">
+                       <t t-set="fresh_package_qty" t-value="0"/>
+                       <t t-foreach="doc.invoice_line_ids" t-as="line">
+                         <t t-if="line.package_id.shipping_grade == 'fresh'">
+                           <t t-set="fresh_package_qty" t-value="fresh_package_qty + line.package_id.shipping_quantity"/>
+                         </t>
+                       </t>
+                       <span t-esc="fresh_package_qty"/>
+
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-3">
+                        <span><strong>B-Grade</strong></span>
+                      </div>
+                      <div class="col-3">
+                       <t t-set="fresh_package_qty" t-value="0"/>
+                       <t t-foreach="doc.invoice_line_ids" t-as="line">
+                         <t t-if="line.package_id.shipping_grade == 'b'">
+                           <t t-set="bgrade_package_qty" t-value="bgrade_package_qty + line.package_id.shipping_quantity"/>
+                         </t>
+                       </t>
+                       <span t-esc="bgrade_package_qty"/>
+
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-3">
+                        <span><strong>Cut Piece</strong></span>
+                      </div>
+                      <div class="col-3">
+                       <t t-set="cut_piece_package_qty" t-value="0"/>
+                       <t t-foreach="doc.invoice_line_ids" t-as="line">
+                         <t t-if="line.package_id.shipping_grade == 'c'">
+                           <t t-set="cut_piece_package_qty" t-value="cut_piece_package_qty + line.package_id.shipping_quantity"/>
+                         </t>
+                       </t>
+                       <span t-esc="cut_piece_package_qty"/>
+
+                      </div>
+                    </div>
+                    <!--Sum Fresh, B-Grade and Cut Piece Qty Section End-->
+
+                    <!--Total Sum Fresh, B-Grade and Cut Piece Qty Section Start-->
+                    <div class="row">
+                      <div class="col-3">
+                        <span><strong>Total Processed Fabric</strong></span>
+                      </div>
+                      <div class="col-3">
+                        <t t-set="fresh_package_qty" t-value="0"/>
+                        <t t-set="bgrade_package_qty" t-value="0"/>
+                        <t t-set="cut_piece_package_qty" t-value="0"/>
+                        <t t-set="tot_package_qty" t-value="0"/>
+                        <t t-foreach="doc.invoice_line_ids" t-as="line">
+                          <t t-if="line.package_id.shipping_grade == 'fresh'">
+                            <t t-set="fresh_package_qty" t-value="fresh_package_qty + line.package_id.shipping_quantity"/>
+                          </t>
+                          <t t-if="line.package_id.shipping_grade == 'b'">
+                            <t t-set="bgrade_package_qty" t-value="bgrade_package_qty + line.package_id.shipping_quantity"/>
+                          </t>
+                          <t t-if="line.package_id.shipping_grade == 'c'">
+                            <t t-set="cut_piece_package_qty" t-value="cut_piece_package_qty + line.package_id.shipping_quantity"/>
+                          </t>
+                        </t>
+                        <t t-set="tot_package_qty" t-value="fresh_package_qty + bgrade_package_qty + cut_piece_package_qty"/>
+                        <span t-esc="tot_package_qty"/>
+
+                      </div>
+                    </div>
+                    <!--Total Sum Fresh, B-Grade and Cut Piece Qty Section End-->
+
+                </div>
+            </t>
+        </t>
+        </t>
+    </template>
+</odoo>

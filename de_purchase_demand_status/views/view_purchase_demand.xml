@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!--show status-bar in form view-->
+        <record id="inherit_form_view_purchase_order_multiple" model="ir.ui.view">
+            <field name="name">inherit.form.view.purchase.order.multiple</field>
+            <field name="model">purchase.order.multiple</field>
+            <field name="inherit_id" ref="de_purchase_multiple_rfq.multiple_rfqs_form_view"/>
+            <field name="arch" type="xml">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,create-po"/>
+                </header>
+                <xpath expr="//field[@name='name']" position="before">
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_test" type="object" class="oe_stat_button" state='done' icon="fa-pencil-square-o"  attrs="{'invisible': [('purchase_count', '=', 0)]}">
+                            <field name="purchase_count" widget="statinfo"/>
+                        </button>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <!--Show status on tree view-->
+        <record id="inherit_tree_view_purchase_order_multiple" model="ir.ui.view">
+            <field name="name">inherit.tree.view.purchase.order.multiple</field>
+            <field name="model">purchase.order.multiple</field>
+            <field name="inherit_id" ref="de_purchase_multiple_rfq.multiple_rfqs_tree_view"/>
+            <field name="arch" type="xml">
+                <field name="date" position="after">
+                    <field name="manual_input"/>
+                    <field name="state"/>
+                </field>
+            </field>
+        </record>
+    </data>
+</odoo>

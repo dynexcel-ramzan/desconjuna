@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<!--    <data>-->
+<!--        &lt;!&ndash;Show sale status on sale order form view&ndash;&gt;-->
+        <record id="inherit_sale_order_form_view" model="ir.ui.view">
+            <field name="name">inherit.sale.order.form.view</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='analytic_account_id']" position="after">
+                    <field name="sale_status"/>
+                </xpath>
+<!--                Hide Product template from sale order lines-->
+                <xpath expr="//field[@name='product_template_id']" position="attributes">
+                    <attribute name="attrs">{"readonly": [["product_updatable","=",False]], "required": [["display_type","=",False]]}</attribute>
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+            </field>
+        </record>
+<!--        &lt;!&ndash;Sale status on sale quotation tree view&ndash;&gt;-->
+        <record id="inherit_sale_quotation_tree_view" model="ir.ui.view">
+            <field name="name">inherit.sale.quotation.tree.view</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='state']" position="before">
+                    <field name="sale_status"/>
+                </xpath>
+            </field>
+        </record>
+        <!--End sale status on sale quotation tree view-->
+        <!--Show sale status on sale order tree view-->
+        <record id="inherit_sale_order_tree_view" model="ir.ui.view">
+            <field name="name">inherit.sale.order.form.view</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='invoice_status']" position="before">
+                    <field name="sale_status"/>
+                </xpath>
+            </field>
+        </record>
+<!--    </data>-->
+</odoo>

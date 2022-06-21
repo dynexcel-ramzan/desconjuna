@@ -1,0 +1,42 @@
+<odoo>
+  <data>
+           <!--Display form view of wizard-->
+        <record id="view_greige_receipt_report_wizard" model="ir.ui.view">
+            <field name="name">view.greige.receipt.report.wizard</field>
+            <field name="model">greige.receipt.report.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                            <field name="owner_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+
+                    <footer>
+                        <button name="check_report"
+                            string="Invoice Customer PDF"
+                            type="object"
+                            class="oe_highlight"/>
+                        <button string="Cancel" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!--Open the wizard on click of menu-->
+        <record id="greige_receipt_wizard_action" model="ir.actions.act_window">
+            <field name="name">Greige Receipt Information</field>
+            <field name="res_model">greige.receipt.report.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="view_id" ref="view_greige_receipt_report_wizard"/>
+        </record>
+      <menuitem action="greige_receipt_wizard_action" id="greige_receipt_report_menu" name="Greige Receipt" parent="stock.menu_warehouse_report" sequence="118"/>
+
+
+  </data>
+</odoo>

@@ -1,0 +1,22 @@
+{
+    "name": "Stock Transfer Report",
+    "category": 'Stock',
+    "summary": '',
+    "description": """Generate Report from Stock Transfer""",
+    "sequence": 0,
+    "author": "Dynexcel",
+    "website": "http://www.dynexcel.co",
+    "version": '14.0.0.0',
+    "depends": ['base', 'stock'],
+    "data": [
+        'security/ir.model.access.csv',
+        'wizards/stock_transfer_wizard.xml',
+        'views/stock_transfer_view.xml',
+        'report/production_report.xml',
+    ],
+    "price": 25,
+    "currency": 'PKR',
+    "installable": True,
+    "application": True,
+    "auto_install": False,
+}

@@ -1,0 +1,41 @@
+<odoo>
+  <data>
+           <!--Display form view of wizard-->
+        <record id="view_invoice_customer_wizard" model="ir.ui.view">
+            <field name="name">view.invoice.customer.wizard</field>
+            <field name="model">customer.invoice.report.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="date_from"/>
+                        </group>
+                        <group>
+                            <field name="date_to"/>
+                        </group>
+                    </group>
+
+                    <footer>
+                        <button name="check_report"
+                            string="Invoice Customer PDF"
+                            type="object"
+                            class="oe_highlight"/>
+                        <button string="Cancel" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!--Open the wizard on click of menu-->
+        <record id="invoice_customer_wizard_action" model="ir.actions.act_window">
+            <field name="name">Monthly Processing Report(Line Wise)</field>
+            <field name="res_model">customer.invoice.report.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="view_id" ref="view_invoice_customer_wizard"/>
+        </record>
+      <menuitem action="invoice_customer_wizard_action" id="invoice_customer_report_menu" name="Monthly Processing Report(Line Wise)" parent="account.menu_finance_receivables" sequence="154"/>
+
+
+  </data>
+</odoo>

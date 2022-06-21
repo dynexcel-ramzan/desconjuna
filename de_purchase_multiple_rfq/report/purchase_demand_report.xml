@@ -1,0 +1,17 @@
+<odoo>
+<!--  <data>-->
+    <record id="purchase_demand_report" model="ir.actions.report">
+        <field name="name">Purchase Demand</field>
+        <field name="model">purchase.order.multiple</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">de_purchase_multiple_rfq.report_purchase_demand_template</field>
+    </record>
+<!--     <report-->
+<!--            id="purchase_demand_report"-->
+<!--            string="Purchase Demand"-->
+<!--            model="purchase.order.multiple"-->
+<!--            report_type="qweb-pdf"-->
+<!--            file="de_purchase_multiple_rfq.report_purchase_demand_template"-->
+<!--            name="de_purchase_multiple_rfq.report_purchase_demand_template" />-->
+<!--  </data>-->
+</odoo>

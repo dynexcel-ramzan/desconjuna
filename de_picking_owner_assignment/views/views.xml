@@ -1,0 +1,58 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+    <record id="view_stock_picking_type_form_inherit" model="ir.ui.view">
+        <field name="name">view.stock.picking.type.form.inherit</field>
+        <field name="model">stock.picking.type</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="stock.view_picking_type_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='show_reserved']" position="after">
+                <field name="is_owner"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- actions opening views on models -->
+    <!--
+    <record model="ir.actions.act_window" id="de_picking_owner_mandatory.action_window">
+      <field name="name">de_picking_owner_mandatory window</field>
+      <field name="res_model">de_picking_owner_mandatory.de_picking_owner_mandatory</field>
+      <field name="view_mode">tree,form</field>
+    </record>
+    -->
+
+    <!-- server action to the one above -->
+    <!--
+    <record model="ir.actions.server" id="de_picking_owner_mandatory.action_server">
+      <field name="name">de_picking_owner_mandatory server</field>
+      <field name="model_id" ref="model_de_picking_owner_mandatory_de_picking_owner_mandatory"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "tree,form",
+          "res_model": self._name,
+        }
+      </field>
+    </record>
+    -->
+
+    <!-- Top menu item -->
+    <!--
+    <menuitem name="de_picking_owner_mandatory" id="de_picking_owner_mandatory.menu_root"/>
+    -->
+    <!-- menu categories -->
+    <!--
+    <menuitem name="Menu 1" id="de_picking_owner_mandatory.menu_1" parent="de_picking_owner_mandatory.menu_root"/>
+    <menuitem name="Menu 2" id="de_picking_owner_mandatory.menu_2" parent="de_picking_owner_mandatory.menu_root"/>
+    -->
+    <!-- actions -->
+    <!--
+    <menuitem name="List" id="de_picking_owner_mandatory.menu_1_list" parent="de_picking_owner_mandatory.menu_1"
+              action="de_picking_owner_mandatory.action_window"/>
+    <menuitem name="Server to list" id="de_picking_owner_mandatory" parent="de_picking_owner_mandatory.menu_2"
+              action="de_picking_owner_mandatory.action_server"/>
+    -->
+  </data>
+</odoo>

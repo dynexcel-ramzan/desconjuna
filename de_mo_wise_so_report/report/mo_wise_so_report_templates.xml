@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_mo_wise_so_document">
+        <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="row">
+                      <div class="col-12" style="text-align:center; font-size:22px;">
+                        <strong>MO Wise SO Report</strong>
+                      </div>
+                    </div>
+                    <div class="row" style="margin-top:10px;">
+                      <div class="col-3">
+                        <strong>Customer Name:</strong>
+                        <p class="m-0" t-field="doc.partner_id"/>
+                      </div>
+                      <div class="col-2">
+                        <strong>Sale Order:</strong>
+                        <p class="m-0" t-field="doc.name"/>
+                      </div>
+                      <div class="col-2">
+                        <strong>Date:</strong>
+                        <p class="m-0" t-field="doc.date_order"/>
+                        <!--<p class="m-0" t-field="doc.confirmation_date"/>-->
+                      </div>
+                      <div class="col-2">
+                        <strong>Validity Date:</strong>
+                        <p class="m-0" t-field="doc.validity_date"/>
+                      </div>
+                      <div class="col-2">
+                        <strong>Party PO:</strong>
+                        <p class="m-0" t-field="doc.party_po"/>
+                      </div>
+                    </div>
+                    <div class="row" style="margin-top:10px;">
+                      <table style="width:100%;">
+                        <thead>
+                          <tr style="border:1px solid black;">
+                            <th style="width:5%; padding:5px;">Sr No.</th>
+                            <!--<th>MO List</th>-->
+                            <th style="width:10%; padding:5px;">MO#</th>
+                            <th style="width:20%; padding:5px;">Product</th>
+                            <!--<th>Analytical Tags</th>-->
+                            <th style="width:8%; padding:5px;">Order Qty</th>
+                            <th style="width:8%; padding:5px;">Till Stiched Days</th>
+                            <th style="width:8%; padding:5px;">Stitched Quantity</th>
+                            <th style="width:8%; padding:5px;">Stitched To Stenter Days</th>
+                            <th style="width:8%; padding:5px;">Stitched To Stenter</th>
+                            <th style="width:8%; padding:5px;">Stenter To Fold Days</th>
+                            <th style="width:8%; padding:5px;">Stenter To Fold</th>
+                          </tr>
+                        </thead>
+
+                        <t t-set="index" t-value="1"/>
+                        <t t-set="stiched_confirm_date" t-value="0" />
+                        <t t-set="processed_confirm_date" t-value="0"/>
+
+
+                        <!--<t t-set="sum_fresh_qty" t-value="0"/>-->
+                        <!--<t t-set="sum_bgrade_qty" t-value="0"/>-->
+                        <!--<t t-set="sum_cutpiece_qty" t-value="0"/>-->
+                        <t t-set="sum_product_name" t-value="0"/>
+                        <t t-set="tot_so_qty" t-value="0"/>
+                        <t t-set="tot_sum_qty" t-value="0"/>
+                        <t t-set="tot_sum_stitched_qty" t-value="0"/>
+                        <t t-set="tot_sum_qty_processed" t-value="0"/>
+                        <t t-set="tot_sum_qty_finish" t-value="0"/>
+                        <t t-set="mo_no" t-value="[]"/>
+                        <t t-set="proc_mo_name" t-value="[]"/>
+                        <t t-set="proc_mo_no" t-value="[]"/>
+                        <t t-set="stich_mo_no" t-value="[]"/>
+                        <tbody style="border:1px solid black;">
+                           <t t-foreach="doc.order_line" t-as="line">
+
+                             <t t-set="tot_so_qty" t-value="tot_so_qty + line.product_uom_qty"/>
+                                <t t-foreach="request.env['mrp.production'].search([('state','!=', 'cancel'),('product_id','=', line.product_id.id),('sale_id','=', doc.name)])" t-as="mo_ref">
+
+                                 <t t-if="not mo_ref.id in mo_no">
+                                 <tr style="margin-top:10px; padding:5px;">
+                                   <t t-set="sum_qty" t-value="0"/>
+                                   <t t-set="sum_qty_finish" t-value="0"/>
+                                   <t t-set="sum_stitched_qty" t-value="0"/>
+                                   <t t-set="so_to_stitched_days" t-value="0"/>
+                                   <t t-set="stitched_to_stenter_days" t-value="0"/>
+                                   <t t-set="stenter_to_fold_days" t-value="0"/>
+                                   <t t-set="sum_qty_processed" t-value="0"/>
+                                   <td style="width:5%; padding:5px;">
+                                     <t t-esc="index"/>
+                                     <t t-set="index" t-value="index+1"/>
+                                   </td>
+                                   <!--<td><t t-esc="mo_no"/></td>-->
+                                   <td style="width:10%; padding:5px;"><t t-esc="mo_ref.name"/></td>
+                                   <td style="width:20%; padding:5px;"><t t-esc="line.product_id.name"/> (<t t-esc="line.product_id.attribute_value_ids.name"/>)</td>
+                                   <td style="padding:5px;">
+                                     <t t-esc="mo_ref.product_qty"/><t t-esc="mo_ref.product_uom_id.name"/>
+                                     <!--<t t-esc="line.product_uom_qty"/><t t-esc="line.product_uom.name"/>-->
+                                     <t t-set="tot_sum_qty" t-value="tot_sum_qty +mo_ref.product_qty"/>
+
+                                     </td>
+                                     <t t-set="mo_no" t-value="mo_no+[mo_ref.id]"/>
+                                     <t t-foreach="request.env['mrp.production'].search([('product_id.name','=', line.name+'-Stitched'),('sale_id','=', doc.name)])" t-as="production_order">
+                                       <t t-foreach="request.env['mrp.production'].search([('name','=', production_order.origin)])" t-as="proc_order">
+                                       <t t-if="not production_order.id in stich_mo_no">
+                                       <t t-if="production_order.date_finished">
+                                        <t t-if="proc_order.origin == mo_ref.name">
+                                          <!--<t t-foreach="request.env['mrp.production'].search([('name','=', production_order.origin)])" t-as="proc_order">-->
+                                            <!--<t t-if="proc_order.id in mo_no">-->
+                                              <t t-set="so_to_stitched_days" t-value="so_to_stitched_days + (datetime.datetime.strptime(datetime.datetime.strftime(production_order.date_finished, '%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(str(doc.confirmation_date), '%Y-%m-%d %H:%M:%S')).days"/>
+                                              <t t-foreach="production_order.finished_move_line_ids" t-as="production_lines">
+                                                <t t-set="sum_stitched_qty" t-value="sum_stitched_qty + production_lines.qty_done"/>
+                                              </t>
+                                            </t>
+                                          </t>
+                                          <!--</t>-->
+                                        </t>
+                                       </t>
+                                       <!--<t t-set="stich_mo_no" t-value="stich_mo_no+proc_mo_no"/>-->
+                                      </t>
+                                      <t t-set="stich_mo_no" t-value="stich_mo_no+proc_mo_no"/>
+                                      <!--<td><t t-esc="stich_mo_no"/></td>-->
+
+                                      <t t-foreach="request.env['mrp.production'].search([('product_id.name','=', line.name+'-Processed'),('sale_id','=', doc.name)])" t-as="production_order">
+                                        <t t-if="not production_order.id in proc_mo_no">
+                                          <t t-if="production_order.date_finished">
+                                            <t t-if="production_order.origin == mo_ref.name">
+                                              <t t-set="stitched_to_stenter_days" t-value="stitched_to_stenter_days + (datetime.datetime.strptime(datetime.datetime.strftime(production_order.date_finished, '%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(str(doc.confirmation_date), '%Y-%m-%d %H:%M:%S')).days"/>
+                                              <t t-foreach="production_order.finished_move_line_ids" t-as="production_lines">
+                                                <t t-set="sum_qty_processed" t-value="sum_qty_processed + production_lines.qty_done"/>
+                                              </t>
+                                            </t>
+                                          </t>
+                                        </t>
+
+                                      </t>
+                                      <t t-set="proc_mo_no" t-value="proc_mo_no+[mo_ref.name]"/>
+
+
+
+                                          <!--<t t-foreach="request.env['mrp.production'].search([('name','=', production_order.origin)])" t-as="proc_order">-->
+                                            <!--<t t-if="proc_order.id in mo_no">-->
+                                         <!--<t t-set="stiched_confirm_date" t-value="datetime.datetime.strptime(datetime.datetime.strftime(datetime.date(production_order.date_finished), '%Y-%m-%d'),'%Y-%m-%d')"/>  -->
+
+                                      <!--<td><t t-esc="proc_mo_no"/></td>-->
+                                     <!--<t t-if="request.env['mrp.production'].search([('product_id.name','=', line.name+'-Processed'),('sale_id','=', doc.name)])">-->
+
+                                        <!--<t t-if="production_order.date_finished">  -->
+                                         <!--<t t-set="stiched_confirm_date" t-value="datetime.datetime.strptime(datetime.datetime.strftime(datetime.date(production_order.date_finished), '%Y-%m-%d'),'%Y-%m-%d')"/>  -->
+                                        <!-- <t t-set="stitched_to_stenter_days" t-value="stitched_to_stenter_days + (datetime.datetime.strptime(datetime.datetime.strftime(production_order.date_finished, '%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(str(doc.confirmation_date), '%Y-%m-%d %H:%M:%S')).days"/>-->
+                                        <!--</t>-->
+                                        <!--<t t-foreach="production_order.finished_move_line_ids" t-as="production_lines">                                              -->
+                                        <!--    <t t-set="sum_qty_processed" t-value="sum_qty_processed + production_lines.qty_done"/>-->
+                                        <!--</t>      -->
+                                     <!--</t>-->
+                                    <!--<t t-if="mo_ref.product_id.name == line.name+'-Stitched'">-->
+                                    <!--  <t t-if="mo_ref.date_finished">-->
+                                    <!--    <t t-set="so_to_stitched_days" t-value="so_to_stitched_days + (datetime.datetime.strptime(datetime.datetime.strftime(mo_ref.date_finished, '%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(str(doc.confirmation_date), '%Y-%m-%d %H:%M:%S')).days"/>-->
+                                    <!--  </t>-->
+                                    <!--  <t t-foreach="mo_ref.finished_move_line_ids" t-as="production_lines">-->
+                                    <!--    <t t-set="sum_stitched_qty" t-value="sum_stitched_qty + production_lines.qty_done"/>-->
+                                    <!--  </t>-->
+                                    <!--</t>-->
+                                    <!--<t t-if="mo_ref.product_id.name == line.name+'-Processed'">-->
+                                    <!--  <t t-if="mo_ref.date_finished">-->
+                                    <!--    <t t-set="stitched_to_stenter_days" t-value="stitched_to_stenter_days + (datetime.datetime.strptime(datetime.datetime.strftime(mo_ref.date_finished, '%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(str(doc.confirmation_date), '%Y-%m-%d %H:%M:%S')).days"/>-->
+                                    <!--  </t>-->
+                                    <!--  <t t-foreach="mo_ref.finished_move_line_ids" t-as="production_lines">-->
+                                    <!--    <t t-set="sum_qty_processed" t-value="sum_qty_processed + production_lines.qty_done"/>-->
+                                    <!--  </t>-->
+                                    <!--</t>-->
+                                    <t t-if="mo_ref.product_id.name == line.product_id.name">
+                                      <t t-if="mo_ref.date_finished">
+                                        <t t-set="stenter_to_fold_days" t-value="stenter_to_fold_days + (datetime.datetime.strptime(datetime.datetime.strftime(mo_ref.date_finished, '%Y-%m-%d %H:%M:%S'),'%Y-%m-%d %H:%M:%S') - datetime.datetime.strptime(str(doc.confirmation_date), '%Y-%m-%d %H:%M:%S')).days"/>
+                                      </t>
+                                      <t t-foreach="mo_ref.finished_move_line_ids" t-as="production_lines">
+                                        <t t-set="sum_qty_finish" t-value="sum_qty_finish + production_lines.qty_done"/>
+                                      </t>
+                                    </t>
+
+
+                                   <td>
+                                     <span t-esc="so_to_stitched_days"/> days
+                                    </td>
+                                   <td>
+                                     <t t-if="sum_stitched_qty &gt; 0">
+                                       <t t-esc="sum_stitched_qty"/>
+                                       <t t-set="tot_sum_stitched_qty" t-value="tot_sum_stitched_qty + sum_stitched_qty"/>
+                                     </t>
+                                    </td>
+                                    <td>
+                                     <span t-esc="stitched_to_stenter_days"/> days
+                                    </td>
+                                   <td>
+                                     <t t-if="sum_qty_processed &gt; 0">
+                                       <t t-esc="sum_qty_processed"/>
+                                       <t t-set="tot_sum_qty_processed" t-value="tot_sum_qty_processed + sum_qty_processed"/>
+                                     </t>
+                                    </td>
+                                    <td>
+                                     <span t-esc="stenter_to_fold_days"/> days
+                                    </td>
+                                    <td>
+                                     <t t-if="sum_qty_finish &gt; 0">
+                                       <t t-esc="sum_qty_finish"/>
+                                       <t t-set="tot_sum_qty_finish" t-value="tot_sum_qty_finish + sum_qty_finish"/>
+                                     </t>
+                                    </td>
+
+                                 </tr>
+                                 <!--<t t-set="mo_no" t-value="mo_no+[mo_ref.id]"/>-->
+                                 </t>
+                                 </t>
+                           </t>
+                        </tbody>
+                        <tr style="margin-top:10px; border:1px solid black;">
+                          <td colspan="3" style="padding: 5px;"><strong>Total Quantity:</strong></td>
+                          <td colspan=""><t t-esc="tot_sum_qty"/></td>
+                          <td></td>
+                          <td>
+                            <t t-esc="tot_sum_stitched_qty"/>
+                          </td>
+                          <td></td>
+                          <td colspan="">
+                            <t t-esc="tot_sum_qty_processed"/>
+                          </td>
+                          <td></td>
+                          <td colspan="">
+                            <t t-esc="tot_sum_qty_finish"/>
+                          </td>
+                        </tr>
+                        <tr style="margin-top:5px;">
+                          <td colspan="2" style="padding: 5px;"><strong>Total SO Quantity:</strong></td>
+                          <td style="padding: 5px;"><t t-esc="tot_so_qty"/> m</td>
+                        </tr>
+                      </table>
+                    </div>
+                </div>
+            </t>
+        </t>
+    </t>
+    </template>
+</odoo>

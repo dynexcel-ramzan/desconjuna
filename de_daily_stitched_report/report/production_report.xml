@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="production_report"
+            model="ir.actions.report">
+        <field name="name">Daily Stitch Report</field>
+        <field name="model">stock.transfer.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">de_daily_stitched_report.production_report_pdf</field>
+    </record>
+
+    <record id="paperformat_daily_stitch_portrait" model="report.paperformat">
+            <field name="name">PF Daily Stitch Portrait</field>
+            <field name="default" eval="True"/>
+            <field name="format">A4</field>
+            <field name="page_height">0</field>
+            <field name="page_width">0</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">10</field>
+            <field name="margin_bottom">10</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line" eval="False"/>
+            <field name="header_spacing">3</field>
+            <field name="dpi">90</field>
+        </record>
+
+    <template id="production_report_pdf">
+        <t t-call="web.html_container">
+            <div class="centered" style="width: 45%">
+                <t t-call="web.external_layout">
+                    <!--<div class="row">-->
+                        <!--<div class="col-4"/>-->
+                            <!--<div class="col-4">-->
+                                <!--<img src='/web/binary/company_logo' style="width:70%"/>-->
+                            <!--</div>-->
+                        <!--<div class="col-4"/>-->
+                    <!--</div>-->
+                    <!--<br></br>-->
+                    <div class="page">
+                        <h3 style=" text-align: center">Daily Greige Stitch</h3>
+                        <br/>
+                        <t t-set="from_date" t-value="0"/>
+                        <div style="width:100%;">
+                          <p style="text-align: center;">
+                            <t t-set="from_date" t-value="datetime.datetime.strptime(str(docs.from_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                            From:<t t-esc="from_date.strftime('%Y-%m-%d')"/>  T0: <t t-esc="docs.to_date.strftime('%Y-%m-%d')"/></p>
+                        </div>
+                        <div style="width: 100%;">
+                            <table class="table table-condensed" style="border: 1px solid black;">
+                                <thead>
+                                    <tr>
+                                        <!--<th style="border: 1px solid black">-->
+                                            <!--<b style="color:black">SR No #</b>-->
+                                        <!--</th>-->
+                                        <th style="border: 1px solid black">
+                                            <b style="color:black">Production Date</b>
+                                        </th>
+                                        <th style="border: 1px solid black">
+                                            <b style="color:black">Mo#</b>
+                                        </th>
+                                        <th style="border: 1px solid black">
+                                            <b style="color:black">Lot#</b>
+                                        </th>
+                                        <th style="border: 1px solid black">
+                                            <b style="color:black">Customer</b>
+                                        </th>
+                                         <th style="border: 1px solid black">
+                                            <b style="color:black">Greige Description</b>
+                                        </th>
+                                        <th style="border: 1px solid black">
+                                            <b style="color:black">Stitched Product</b>
+                                        </th>
+                                        <!--<th style="border: 1px solid black">-->
+                                        <!--    <b style="color:black">Consume Product</b>-->
+                                        <!--</th>-->
+                                        <th style="border: 1px solid black">
+                                            <b style="color:black">QTY Stitched</b>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <t t-set="sum_qty_stitched" t-value="0"/>
+                                <t t-set="prd_date" t-value="0"/>
+                                <t t-set="stitched_product" t-value="0"/>
+                                <tbody class="invoice_tbody">
+                                    <!--<t t-set="index" t-value="1"/>-->
+                                    <t t-foreach="stock_ids" t-as="stock">
+                                        <!--<t t-foreach="stock.mrp_ids" t-as="mrp">-->
+
+                                            <tr>
+                                                <td>
+                                                    <t t-if="stock.production_date">
+                                                      <t t-set="prd_date" t-value="datetime.datetime.strptime(str(stock.production_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                        <t t-esc="prd_date.strftime('%Y-%m-%d')"/>
+                                                    </t>
+                                                </td>
+
+                                                <td>
+                                                        <span t-esc="stock.reference"/>
+                                                </td>
+                                                <t t-set="gre_prd" t-value="0"/>
+                                                <t t-set="cloth_descr" t-value="0"/>
+                                                <t t-set="lot_no" t-value="0"/>
+                                                <t t-foreach="request.env['stock.move.line'].search([('product_id.categ_id','=', 'Greige'), ('location_id.id','=', 18)])" t-as="gre_order">
+                                                    <t t-if="stock.reference == gre_order.reference">
+                                                      <!--<t t-set="gre_prd" t-value="gre_order.product_id.display_name"/>-->
+                                                      <t t-set="cloth_descr" t-value="gre_order.cloth_desc"/>
+                                                      <t t-set="lot_no" t-value="gre_order.lot_id.name"/>
+                                                    </t>
+
+                                                </t>
+                                                <td>
+                                                    <t t-esc="lot_no"/>
+                                                        <!--</t>-->
+                                                </td>
+                                                <t t-foreach="request.env['mrp.production'].search([('name','=', stock.reference)])" t-as="prd_order">
+                                                    <td>
+                                                        <t t-esc="prd_order.x_partner_id.name"/>
+                                                    </td>
+                                                    <td>
+                                                      <t t-esc="cloth_descr"/>
+                                                        <!--</t>-->
+                                                    </td>
+                                                    <td>
+                                                      <!--Show product name before stitched using Split "-" in product name-->
+                                                      <t t-set="stitched_product" t-value="prd_order.product_id.name.split('-')"/>
+                                                      <!--<t t-set="my_name" t-value="'prakash,kumar'.split(',')"/>-->
+                                                        <t t-esc="stitched_product[0]"/>
+                                                        <!--<t t-esc="prd_order.product_id.name"/>-->
+                                                    </td>
+                                                </t>
+
+                                                <!--<td>-->
+                                                <!--    <t t-esc="gre_prd"/>-->
+                                                        <!--</t>-->
+                                                <!--</td>-->
+
+                                                <td>
+                                                    <t t-esc="stock.qty_done"/>
+                                                    <t t-set="sum_qty_stitched" t-value="sum_qty_stitched + stock.qty_done"/>
+                                                        <!--</t>-->
+                                                </td>
+                                                <!--<td>-->
+                                                    <!--<span t-esc="line.quantity_done"/>-->
+                                                <!--</td>-->
+                                            </tr>
+                                        <!--</t>-->
+                                    </t>
+                                    <tr>
+                                      <td colspan="6"><b>Total Stitched Qty: </b></td>
+                                      <td><t t-esc="sum_qty_stitched"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </t>
+
+    </template>
+</odoo>
+

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="inherit_view_stock_picking_form" model="ir.ui.view">
+        <field name="name">inherit.view.stock.picking.form</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"></field>
+        <field name="arch" type="xml">
+            <xpath expr="//form[1]/header[1]/button[@name='action_toggle_is_locked']" position="attributes">
+                <attribute name="groups">stock.group_stock_user</attribute>
+            </xpath>
+        </field>
+    </record>
+
+<!--    <record id="view_inherit_mrp_production_form" model="ir.ui.view">-->
+<!--        <field name="name">view.inherit.mrp.production.form</field>-->
+<!--        <field name="model">mrp.production</field>-->
+<!--        <field name="inherit_id" ref="mrp.mrp_production_form_view"></field>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <header>-->
+<!--                <button name="action_toggle_is_locked" string="Unlock" groups="mrp.group_mrp_user" type="object" help="Unlock the manufacturing order to adjust what has been consumed or produced."/>-->
+<!--            </header>-->
+<!--        </field>-->
+<!--    </record>-->
+
+</odoo>
+

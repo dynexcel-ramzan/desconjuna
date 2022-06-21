@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_quant_package_form_inherit" model="ir.ui.view">
+        <field name="name">view.quant.package.form.inherit</field>
+        <field name="model">stock.quant.package</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="stock.view_quant_package_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_id']" position="before">
+                <field name="shipping_quantity"/>
+                <field name="shipping_grade"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Tree View -->
+    <record id="view_quant_package_tree_inherit" model="ir.ui.view">
+        <field name="name">view.quant.package.tree.inherit</field>
+        <field name="model">stock.quant.package</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="stock.view_quant_package_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='location_id']" position="before">
+                <field name="shipping_quantity"/>
+                <field name="shipping_grade"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Search View -->
+    <record id="quant_package_search_view_inherit" model="ir.ui.view">
+        <field name="name">quant.package.search.view.inherit</field>
+        <field name="model">stock.quant.package</field>
+        <field name="type">search</field>
+        <field name="inherit_id" ref="stock.quant_package_search_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search[1]/group[1]" position="after">
+                <filter string="Fresh" domain="[('shipping_grade','=','fresh')]" name="fresh"/>
+                <separator/>
+                <filter string="B-Grade" domain="[('shipping_grade','=','b')]" name="bgrade"/>
+                <separator/>
+                <filter string="Cut Piece" domain="[('shipping_grade','=','c')]" name="cgrade"/>
+                <group expand="0" string="Group By">
+                    <filter string="Grade" name="grade" domain="[]" context="{'group_by':'shipping_grade'}"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

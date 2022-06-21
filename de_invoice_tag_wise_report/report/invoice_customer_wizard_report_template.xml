@@ -1,0 +1,164 @@
+<odoo>
+    <template id="invoice_customer_report_pdf">
+      <t t-call="web.html_container">
+          <t t-foreach="docs" t-as="docs">
+              <div class="article o_report_layout_standard" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id">
+                  <div class="page">
+                      <h3 style=" text-align: center">Monthly Processing Report(Line Wise)</h3>
+                      <br/>
+                      <t t-set="date_from" t-value="0"/>
+                      <div style="width:100%;">
+                          <p style="text-align: center;">
+<!--                             <t t-set="date_from" t-value="datetime.datetime.strptime(str(docs.from_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/> -->
+                              <strong>From:<t t-esc="datetime.datetime.strptime(str(docs.date_from), '%Y-%m-%d').strftime('%d %b %Y')" />  T0: <t t-esc="datetime.datetime.strptime(str(docs.date_to), '%Y-%m-%d').strftime('%d %b %Y')"/></strong></p>
+                      </div>
+                      <div style="width: 100%;">
+                          <table style="width:100%; border: 1px solid black;">
+                              <thead>
+                                  <tr>
+                                      <th style="width: 12%; border: 1px solid black; padding-left: 5px;">Invoice Date</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">SO#</th>
+                                      <th style="width: 11%; border: 1px solid black; padding-left: 5px;">Invoice No.</th>
+                                      <th style="width: 10%; border: 1px solid black; padding-left:5px;">Width</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">Qty</th>
+                                      <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Rate/m</th>
+                                      <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Amount</th>
+                                      <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Gst</th>
+                                      <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Amount/Gst</th>
+                                  </tr>
+                              </thead>
+                              <t t-set="tot_qty" t-value="0"/>
+                              <t t-set="tot_untaxed_amount" t-value="0"/>
+                              <t t-set="tot_gst_amount" t-value="0"/>
+                              <t t-set="tot_taxed_amount" t-value="0"/>
+                              <tbody>
+                                  <t t-set="tags" t-value="[]"/>
+                                  <t t-set="product_width" t-value="0"/>
+                                  <t t-set="uniq_tages" t-value="[]"/>
+<!--                                   <t t-set="tot_qty" t-value="0"/>
+                                  <t t-set="tot_untaxed_amount" t-value="0"/>
+                                  <t t-set="tot_taxed_amount" t-value="0"/> -->
+                                  <t t-set="from_date" t-value="datetime.datetime.strptime(str(docs.date_from), '%Y-%m-%d').strftime('%d %b %Y')"/>
+                                  <t t-set="to_date" t-value="datetime.datetime.strptime(str(docs.date_to), '%Y-%m-%d').strftime('%d %b %Y')"/>
+                                  <t t-foreach="invoice_ids" t-as="invoice">
+<!--                                       <t t-set="tags" t-value="[]"/> -->
+                                      <t t-set="fresh_qty" t-value="0"/>
+                                      <t t-foreach="invoice.invoice_line_ids" t-as="line">
+                                          <t t-foreach="line.analytic_tag_ids.sorted(key=lambda a: a.sequence)" t-as="t">
+                                              <t t-if="t.name in ('White', 'Ecru', 'light','Medium', 'Dark', 'Black')" t-set="tags" t-value="tags+[t]"/>
+                                              <t t-set="uniq_tages" t-value="set(tags)" />
+                                          </t>
+                                      </t>
+                                  </t>
+<!--                                   Sort a list -->
+                                  <t t-foreach="sorted(uniq_tages, key=lambda ta: ta.sequence)" t-as="tag">
+<!--                                     <t t-foreach="uniq_tages.sort(key=lambda ta: ta.get(x_sequence)" t-as="tag"> -->
+                                        <t t-set="tot_line_qty" t-value="0"/>
+                                        <t t-set="tot_line_untaxed_amount" t-value="0"/>
+                                        <t t-set="tot_line_gst_amount" t-value="0"/>
+                                        <t t-set="tot_line_taxed_amount" t-value="0"/>
+                                        <t t-set="tag_count" t-value="0"/>
+
+                                        <tr style="border: 1px solid black; background-color: #a4a4a4;">
+                                            <td colspan="9" style="text-align:center;"><strong><t t-esc="tag.name"/></strong></td>
+                                        </tr>
+<!--                                         </tr> -->
+                                        <t t-foreach="request.env['account.move.line'].search([('analytic_tag_ids','=', tag.name), ('move_id.invoice_date','&gt;=', from_date), ('move_id.invoice_date','&lt;=', to_date), ('move_id.move_type','=', 'out_invoice')], order='product_width asc')" t-as="inv">
+                                            <t t-set="tax_name" t-value="0"/>
+                                            <t t-set="gst_amount" t-value="0"/>
+                                            <t t-set="taxed_amount" t-value="0"/>
+                                            <t t-set="tax_amount" t-value="0"/>
+                                            <t t-if="'Fresh' in inv.name">
+                                                <t t-foreach="inv.tax_ids" t-as="tax">
+                                                    <t t-set="tax_name" t-value="tax.name"/>
+                                                    <t t-set="tax_amount" t-value="tax.amount"/>
+                                                </t>
+                                                <t t-if="tax_amount &gt; 0" t-set="untaxed_amount" t-value="(inv.price_subtotal/(tax_amount + 100))*100"/>
+                                            <tr>
+                                                <td style="width: 12%; border: 1px solid black; text-align: center;"><t t-esc="inv.move_id.invoice_date"/></td>
+                                                <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="inv.move_id.invoice_origin"/></td>
+                                                <td style="width: 11%; border: 1px solid black; text-align: center;"><t t-esc="inv.move_id.name"/></td>
+                                                <td style="width: 10%; border: 1px solid black; text-align: center;"><t t-esc="inv.product_id.product_width"/></td>
+                                                <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                                    <t t-esc="inv.quantity"/>
+                                                    <t t-set="tot_line_qty" t-value="tot_line_qty + inv.quantity"/>
+                                                </td>
+
+                                                <td style="width: 10%; border: 1px solid black; text-align: center;"><t t-esc="'{0:,.3f}'.format(int(inv.price_unit))"/></td>
+                                                <td style="width: 10%; border: 1px solid black; text-align: center;">
+                                                    <t t-esc="'{0:,.2f}'.format(inv.price_subtotal)"/>
+                                                    <t t-set="tot_line_untaxed_amount" t-value="tot_line_untaxed_amount + inv.price_subtotal"/>
+                                                </td>
+                                                <td style="width: 10%; border: 1px solid black; text-align: center;">
+                                                    <t t-set="gst_amount" t-value="inv.price_subtotal*(tax_amount / 100)"/>
+                                                    <t t-esc="'{0:,.2f}'.format(gst_amount)"/>
+                                                    <t t-set="tot_line_gst_amount" t-value="tot_line_gst_amount + gst_amount"/>
+                                                </td>
+                                                <td style="width: 10%; border: 1px solid black; text-align: center;">
+                                                    <t t-set="taxed_amount" t-value="inv.price_subtotal + gst_amount"/>
+                                                    <t t-esc="'{0:,.2f}'.format(taxed_amount)"/>
+                                                    <t t-set="tot_line_taxed_amount" t-value="tot_line_taxed_amount + taxed_amount"/>
+                                                </td>
+
+                                            </tr>
+
+                                            <t set="tag_count" t-value="tag_count + 1"/>
+                                            </t>
+                                        </t>
+                                        <tr style="border: 1px solid black;">
+                                            <td style="padding-left: 5px;"><strong>Total</strong></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td></td>
+                                            <td style="border: 1px solid black; text-align:center;">
+                                                <t t-esc="tot_line_qty"/>
+                                                <t t-set="tot_qty" t-value="tot_qty + tot_line_qty"/>
+
+                                            </td>
+                                            <td></td>
+<!--                                            <td></td>-->
+                                            <td style="border: 1px solid black; text-align:center;">
+                                                <t t-esc="'{0:,.2f}'.format(tot_line_untaxed_amount)"/>
+                                                 <t t-set="tot_untaxed_amount" t-value="tot_untaxed_amount + tot_line_untaxed_amount"/>
+
+                                            </td>
+                                            <td style="border: 1px solid black; text-align:center;">
+                                                <t t-esc="'{0:,.2f}'.format(tot_line_gst_amount)"/>
+                                                 <t t-set="tot_gst_amount" t-value="tot_gst_amount + tot_line_gst_amount"/>
+
+                                            </td>
+
+                                            <td style="border: 1px solid black; text-align:center;">
+                                                <t t-esc="'{0:,.2f}'.format(tot_line_taxed_amount)"/>
+                                                <t t-set="tot_taxed_amount" t-value="tot_taxed_amount + tot_line_taxed_amount"/>
+                                            </td>
+                                        </tr>
+                                  </t>
+                                  <br></br>
+
+                              </tbody>
+                              <tr style="border: 1px solid balck; background-color: #a4a4a4;">
+                                  <td colspan="4" style="border: 1px solid black; padding-left: 5px;"><strong>Grand Total: </strong></td>
+                                  <td style="border: 1px solid black; text-align:center;"><t t-esc="tot_qty"/></td>
+                                  <td></td>
+<!--                                  <td></td>-->
+                                  <td style="border: 1px solid black; text-align:center;">
+                                      <t t-esc="'{0:,.2f}'.format(tot_untaxed_amount)"/>
+                                  </td>
+                                  <td style="border: 1px solid black; text-align:center;">
+                                      <t t-esc="'{0:,.2f}'.format(tot_gst_amount)"/>
+                                  </td>
+                                  <td style="border: 1px solid black; text-align:center;">
+                                      <t t-esc="'{0:,.2f}'.format(tot_taxed_amount)"/>
+                                  </td>
+                              </tr>
+                          </table>
+                      </div>
+
+
+                  </div>
+              </div>
+          </t>
+      </t>
+    </template>
+</odoo>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!--Show note field on form view-->
+        <record id="inherit_multiple_rfqs_form_view" model="ir.ui.view">
+            <field name="name">inherit.multiple.rfqs.form.view</field>
+            <field name="model">purchase.order.multiple</field>
+            <field name="inherit_id" ref="de_purchase_multiple_rfq.multiple_rfqs_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                     <page string="Note" name="note">
+                            <field name="note" string="Note" placeholder="Add an internal note here"/>
+                        </page>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

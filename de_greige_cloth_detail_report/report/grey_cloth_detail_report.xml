@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+<!--    <data>-->
+<!--    <record id="paperformat_com_process_bill_portrait" model="report.paperformat">-->
+<!--        <field name="name">PF CProcess Bill Portrait</field>-->
+<!--        <field name="default" eval="True"/>-->
+<!--        <field name="format">A4</field>-->
+<!--        <field name="page_height">0</field>-->
+<!--        <field name="page_width">0</field>-->
+<!--        <field name="orientation">Portrait</field>-->
+<!--        <field name="margin_top">10</field>-->
+<!--        <field name="margin_bottom">10</field>-->
+<!--        <field name="margin_left">7</field>-->
+<!--        <field name="margin_right">7</field>-->
+<!--        <field name="header_line" eval="False"/>-->
+<!--        <field name="header_spacing">3</field>-->
+<!--        <field name="dpi">90</field>-->
+<!--    </record>-->
+
+<!--    <record id="action_report_process_bill" model="ir.actions.report">-->
+<!--        <field name="name">Process Bill For Company</field>-->
+<!--        <field name="model">account.move</field>-->
+<!--        <field name="report_type">qweb-pdf</field>-->
+<!--        <field name="report_name">de_com_process_bill.report_com_process_bill_document</field>-->
+<!--    </record>-->
+        <report
+            id="action_report_grey_cloth_detail"
+            string="Grey Cloth Detail"
+            model="account.move"
+            report_type="qweb-pdf"
+            file="de_greige_cloth_detail_report.report_grey_cloth_detail_document"
+            name="de_greige_cloth_detail_report.report_grey_cloth_detail_document"
+            print_report_name="'Grey Cloth Detail - %s' % (object.name)"
+        />
+<!--    </data> -->
+</odoo>

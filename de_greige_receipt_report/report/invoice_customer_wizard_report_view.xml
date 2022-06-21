@@ -1,0 +1,13 @@
+<odoo>
+  <data>
+        <report
+            id="greige_receipt_report_action"
+            string="Greige Receipt"
+            model="report.de_greige_receipt_report.greige_receipt_report_pdf"
+            report_type="qweb-pdf"
+            file="de_greige_receipt_report.greige_receipt_report_pdf"
+            name="de_greige_receipt_report.greige_receipt_report_pdf"
+        />
+
+  </data>
+</odoo>

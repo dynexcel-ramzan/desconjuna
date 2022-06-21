@@ -1,0 +1,16 @@
+<odoo>
+  <data>
+    <!-- Show Sequence in Form view  -->
+<!--    <record id="inherit_account_analytic_tag_form_view" model="ir.ui.view">-->
+<!--            <field name="name">inherit.account.analytic.tag.form.view</field>-->
+<!--            <field name="model">account.analytic.tag</field>-->
+<!--            <field name="inherit_id" ref="analytic.account_analytic_tag_form_view"/>-->
+<!--            <field name="arch" type="xml">-->
+<!--                <field name="company_id" position="after">-->
+<!--                    <field name="sequence" />-->
+<!--                </field>-->
+
+<!--            </field>-->
+<!--        </record>-->
+  </data>
+</odoo>

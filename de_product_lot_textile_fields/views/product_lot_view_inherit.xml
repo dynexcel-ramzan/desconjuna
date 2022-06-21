@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_product_template_form_inherit" model="ir.ui.view">
+        <field name="name">view.product.template.form.inherit</field>
+        <field name="model">product.template</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="product.product_template_only_form_view"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='tracking']" position="after">
+                <field name="is_greige_type"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_production_lot_form_inherit" model="ir.ui.view">
+        <field name="name">view.production.lot.form.inherit</field>
+        <field name="model">stock.production.lot</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='main_group']/group" position="after">
+                <group>
+                    <field name="cloth_type_id" options="{'no_create': True}"/>
+                    <field name="ratio"/>
+                    <field name="reed"/>
+                    <field name="pick"/>
+                    <field name="warp"/>
+                    <field name="weft"/>
+                    <field name="wd"/>
+                    <field name="cloth_desc"/>
+                    <field name="cloth_type_active"/>
+                    <field name="is_lot_move"/>
+                </group>
+               
+            </xpath>
+        </field>
+    </record>
+
+    <!--<record id="view_production_lot_form_simple_inherit" model="ir.ui.view">-->
+        <!--<field name="name">view.production.lot.form.simple.inherit</field>-->
+        <!--<field name="model">stock.production.lot</field>-->
+        <!--<field name="type">form</field>-->
+        <!--<field name="inherit_id" ref="stock.view_production_lot_form_simple"/>-->
+        <!--<field name="arch" type="xml">-->
+            <!--<xpath expr="//group[@name='main_group']" position="after">-->
+                <!--<group>-->
+                    <!--<field name="cloth_type_id" options="{'no_create': True}"/>-->
+                    <!--<field name="ratio"/>-->
+                    <!--<field name="reed"/>-->
+                    <!--<field name="pick"/>-->
+                    <!--<field name="warp"/>-->
+                    <!--<field name="weft"/>-->
+                    <!--<field name="wd"/>-->
+                    <!--<field name="cloth_desc"/>-->
+                    <!--<field name="cloth_type_active"/>-->
+                    <!--<field name="is_lot_move"/>-->
+                <!--</group>-->
+            <!--</xpath>-->
+        <!--</field>-->
+    <!--</record>-->
+    
+    <record id="view_product_lot_tree_inherit" model="ir.ui.view">
+        <field name="name">view.product.lot.tree.inherit</field>
+        <field name="model">stock.production.lot</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="stock.view_production_lot_tree"/>
+        <field name="arch" type="xml">
+            <field name='product_id' position='after'>
+                <field name="cloth_desc"/>
+            </field>
+        </field>
+    </record>
+    
+    <!-- read only  View -->
+    <!--<record id="view_production_lot_form_simple_inherit_readonly" model="ir.ui.view">-->
+        <!--<field name="name">view.production.lot.form.simple.inherit.readonly</field>-->
+        <!--<field name="model">stock.production.lot</field>-->
+        <!--<field name="type">form</field>-->
+        <!--<field name="inherit_id" ref="stock.view_production_lot_form_simple"/>-->
+        <!--<field name="arch" type="xml">-->
+           <!--<xpath expr="//field[@name='cloth_type_id']" position="attributes">-->
+                <!--<attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>-->
+            <!--</xpath>-->
+            <!--<xpath expr="//field[@name='ratio']" position="attributes">-->
+                <!--<attribute name="attrs">{"readonly": [["is_lot_move","=",True]]}</attribute>-->
+            <!--</xpath>-->
+            <!--<xpath expr="//field[@name='reed']" position="attributes">-->
+                <!--<attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>-->
+            <!--</xpath>-->
+            <!--<xpath expr="//field[@name='pick']" position="attributes">-->
+                <!--<attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>-->
+            <!--</xpath>-->
+            <!--<xpath expr="//field[@name='warp']" position="attributes">-->
+                <!--<attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>-->
+            <!--</xpath>-->
+            <!--<xpath expr="//field[@name='weft']" position="attributes">-->
+                <!--<attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>-->
+            <!--</xpath>-->
+            <!--<xpath expr="//field[@name='wd']" position="attributes">-->
+                <!--<attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>-->
+            <!--</xpath>-->
+        <!--</field>-->
+    <!--</record> -->
+
+    <record id="view_production_lot_form_inherit_readonly" model="ir.ui.view">
+        <field name="name">view.production.lot.form.inherit.readonly</field>
+        <field name="model">stock.production.lot</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="stock.view_production_lot_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='cloth_type_id']" position="attributes">
+                <attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='ratio']" position="attributes">
+                <attribute name="attrs">{"readonly": [["is_lot_move","=",True]]}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='reed']" position="attributes">
+                <attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='pick']" position="attributes">
+                <attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='warp']" position="attributes">
+                <attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='weft']" position="attributes">
+                <attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='wd']" position="attributes">
+                <attribute name="attrs">{"readonly": [["is_lot_move","=",True]], "required": [["cloth_type_active","=",True]]}</attribute>
+            </xpath>
+            <!-- make required fields -->
+            
+        </field>
+    </record>
+    
+    <!-- change product move views -->
+    <record id="view_move_line_form_inherit" model="ir.ui.view">
+        <field name="name">view.move.line.form.inherit</field>
+        <field name="model">stock.move.line</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="stock.view_move_line_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='lot_id']" position="after">
+                <field name="is_greige_type" invisible="1"/>
+                <field name="cloth_desc" attrs="{'invisible': [('is_greige_type', '=', False)]}"/>             
+            </xpath>
+        </field>
+    </record>
+    <record id="view_move_line_tree_inherit" model="ir.ui.view">
+        <field name="name">view.move.line.tree.inherit</field>
+        <field name="model">stock.move.line</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="stock.view_move_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='product_id']" position="after">
+                <field name="is_greige_type" invisible="1"/>
+                <field name="cloth_desc" attrs="{'invisible': [('is_greige_type', '=', False)]}"/>             
+            </xpath>
+        </field>
+    </record>
+</odoo>

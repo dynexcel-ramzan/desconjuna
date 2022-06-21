@@ -1,0 +1,786 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_process_bill_document">
+        <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="row">
+                      <div class="col-9" style="text-align:center; font-size:28px; font-style: italic;">
+                        <strong style="padding-left:150px;">PROCESSING BILL</strong>
+                      </div>
+                      <div class="col-3" style="font-size:17px; font-style: italic;">
+                        <strong>(Original Bill)</strong>
+                      </div>
+                    </div>
+                    <div class="row" style="margin-top:5px;">
+                      <div class="col-8" style="font-size:18px;">
+                        <table>
+                          <tr>
+                            <th>Customer:</th>
+                            <td><span t-field="doc.partner_id"/></td>
+                          </tr>
+                          <tr>
+                            <th>Party PO:</th>
+                            <td>
+                              <t t-foreach="request.env['sale.order'].search([('name','=', doc.invoice_origin)])" t-as="sale_order">
+                                <p class="m-0" t-field="sale_order.party_po"/>
+                              </t>
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Reference:</th>
+                            <td><p class="m-0" t-field="doc.narration"/></td>
+                          </tr>
+                        </table>
+                        <!--<strong>Bill To Party</strong>-->
+                        <!--<p><strong><span t-field="doc.partner_id"/></strong></p>-->
+                      </div>
+                      <div class="col-4">
+                        <table>
+                          <tr>
+                            <th>Bill No.</th>
+                            <td t-if="doc.state == 'posted' or doc.state == 'approval'"><span t-field="doc.name"/></td>
+                            <td t-if="doc.state == 'draft'">Draft (<span t-field="doc.id"/>)</td>
+                          </tr>
+                          <tr>
+                            <th>Date:</th>
+                            <td><span t-field="doc.invoice_date" t-options="{'format': 'dd/MM/yyyy'}"/></td>
+                          </tr>
+                          <tr>
+                            <th>Sale Order:</th>
+                            <td><p class="m-0" t-field="doc.invoice_origin"/></td>
+                          </tr>
+
+                        </table>
+                      </div>
+                    </div>
+                    <!--<div class="row" style="margin-top:5px;">-->
+                    <!--  <div class="col-3">-->
+                    <!--    <strong>Sale Order:</strong>-->
+                    <!--    <p class="m-0" t-field="doc.invoice_origin"/>-->
+                    <!--  </div>-->
+                    <!--  <div class="col-3">-->
+                    <!--    <strong>Reference/Description:</strong>-->
+                    <!--    <p class="m-0" t-field="doc.narration"/>-->
+                    <!--  </div>-->
+                    <!--  <div class="col-3">-->
+                    <!--    <t t-foreach="request.env['sale.order'].search([('name','=', doc.invoice_origin)])" t-as="sale_order">-->
+                    <!--      <strong>Party PO:</strong>-->
+                    <!--      <p class="m-0" t-field="sale_order.party_po"/>-->
+                    <!--    </t>-->
+                    <!--  </div>-->
+                    <!--</div>-->
+                    <t t-set="sum_fresh_qty" t-value="0"/>
+                    <t t-set="sum_bgrade_qty" t-value="0"/>
+                    <t t-set="sum_cgrade_qty" t-value="0"/>
+                    <t t-set="sum_tot_invoice_qty" t-value="0"/>
+                    <t t-set="table_index" t-value="0"/>
+                    <div class="row" style="margin-top:10px; height:600px;">
+                      <table cellspacing="0" cellpadding="0" class="sm" style="width:100%; height: 600px; table-layout: fixed;">
+                        <thead>
+                          <tr style="border:1px solid black;">
+                            <!--<th style="width:5%; padding: 4px;">Sr#</th>-->
+                            <th style="width:37%; padding: 4px; text-align: center; border-right: 1px solid black;">Description</th>
+                            <!--<th style="width:8%; padding: 4px; text-align: left; border-right: 1px solid black;">Packing</th>-->
+                            <!--<th style="width:5%; padding: 4px;">P.Qty</th>-->
+                            <!--<th style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">Width</th>-->
+                            <!--<th style="width:8%; padding: 4px; text-align: left; border-right: 1px solid black;">Category</th>-->
+                            <!--<th style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">Dyed/White</th>-->
+                            <!--<th style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">Colour</th>-->
+                            <!--<th style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">Category</th>-->
+                            <!--<th>Shades</th>-->
+
+                        <!--    <t t-set="tags" t-value="[]"/>-->
+                        <!--    <t t-foreach="doc.invoice_line_ids" t-as="inv_line">-->
+                        <!--        <t t-foreach="inv_line.analytic_tag_ids" t-as="t">-->
+                        <!--            <t t-set="tags" t-value="tags+[t]"/>-->
+                        <!--        </t>-->
+                        <!--    </t>-->
+
+
+                        <!--<t t-foreach="set(tags)" t-as="t">-->
+                        <!--    <th style="width:6%; padding: 5px;"><span t-field="t.name"/></th>-->
+                        <!--</t>-->
+                            <th style="width:10%; padding: 4px; text-align: center; border-right: 1px solid black;">Quantity</th>
+                            <th style="width:10%; padding: 4px; text-align: center; border-right: 1px solid black;">Rate<span style="font-size: 10px;">/mtr</span></th>
+                            <!--<th>Taxes</th>-->
+                            <th style="width:10%; padding: 4px; text-align: center; border-right: 1px solid black;">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody style="border:1px solid black;">
+                          <t t-set="index" t-value="1"/>
+                          <t t-set="p_name" t-value="0"/>
+                          <t t-set="pr_name" t-value="0"/>
+                          <t t-set="prd_name" t-value="0"/>
+                          <t t-set="prd_width" t-value="0"/>
+                          <!--<t t-set="sum_qty" t-value="0"/>-->
+                          <t t-set="sum_product_name" t-value="0"/>
+                          <t t-set="same_packing_type" t-value="0"/>
+                          <t t-set="tag_seq" t-value="0"/>
+                          <t t-set="tag_sequence" t-value="request.env['account.analytic.tag'].sudo().search([], order='sequence asc')"/>
+
+                          <!--<t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: (tag_name), reverse=True)" t-as="line">-->
+                          <t t-foreach="tag_sequence" t-as="analytic_tag">
+                            <t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: (x.package_id.shipping_grade == 'fresh', x.shipping_quantity_r == 0, x.name == 'B-Grade'), reverse=True)" t-as="line">
+
+                              <t t-set="uniq_analytic_tag"  t-value="0"/>
+                              <t t-set="uniq_analytic_tag_count"  t-value="0"/>
+                                <t t-foreach="line.analytic_tag_ids.sorted(key=lambda a: (a.sequence), reverse=False)" t-as="a_tag">
+                                  <t t-if="uniq_analytic_tag_count==1">
+                                    <t t-set="uniq_analytic_tag"  t-value="a_tag.name"/>
+                                  </t>
+                                  <t t-set="uniq_analytic_tag_count"  t-value="uniq_analytic_tag_count + 1"/>
+                                </t>
+                                <t t-if="uniq_analytic_tag_count==1" >
+                                  <t t-set="uniq_analytic_tag_count"  t-value="0"/>
+                                  <t t-foreach="line.analytic_tag_ids.sorted(key=lambda a: (a.sequence), reverse=False)" t-as="b_tag">
+                                    <t t-if="uniq_analytic_tag_count==0">
+                                      <t t-set="uniq_analytic_tag"  t-value="b_tag.name"/>
+                                    </t>
+                                    <t t-set="uniq_analytic_tag_count"  t-value="uniq_analytic_tag_count + 1"/>
+                                  </t>
+                                </t>
+                                <t t-if="analytic_tag.name==uniq_analytic_tag">
+                                <t t-set="sum_qty_line" t-value="0"/>
+                                <t t-set="diff_packing_type" t-value=""/>
+                                <t t-set="sam_packing_type_product" t-value=""/>
+                                <t t-set="diff_packing_type_product" t-value=""/>
+                                <t t-set="sum_packing_qty_line" t-value="0"/>
+                                <t t-set="sum_diff_packing_qty_line" t-value="0"/>
+                                <t t-set="sam_packing_type" t-value=""/>
+                                <t t-set="diff_packing_type" t-value=""/>
+                                <t t-set="sum_price_subtotal" t-value="0"/>
+                                <t t-if="line.product_id and line.package_id.shipping_grade == 'fresh'" t-set="sum_fresh_qty" t-value="sum_fresh_qty + line.quantity"/>
+                                <t t-if="line.product_id and line.package_id.shipping_grade == 'b'" t-set="sum_bgrade_qty" t-value="sum_bgrade_qty + line.quantity"/>
+                                <t t-if="line.product_id and line.package_id.shipping_grade == 'c'" t-set="sum_cgrade_qty" t-value="sum_cgrade_qty + line.quantity"/>
+                                <t t-set="sum_tot_invoice_qty" t-value="sum_fresh_qty + sum_bgrade_qty + sum_cgrade_qty"/>
+                                <!--<t t-if="sum_fresh_qty and sum_bgrade_qty" t-set="sum_tot_invoice_qty" t-value="sum_fresh_qty + sum_bgrade_qty"/>-->
+                                <!--<t t-if="sum_fresh_qty and sum_cgrade_qty" t-set="sum_tot_invoice_qty" t-value="sum_fresh_qty + sum_cgrade_qty"/>-->
+                                <t t-if="not sum_fresh_qty and not sum_bgrade_qty and not sum_cgrade_qty" t-set="sum_tot_invoice_qty" t-value="sum_tot_invoice_qty + line.quantity"/>
+                                <t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: (x.package_id.shipping_grade == 'fresh', x.shipping_quantity_r == 0, x.name == 'B-Grade'), reverse=True)" t-as="l">
+                                <!--<t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: (x.name, x.package_id.packing_type, x.price_unit), reverse=True)" t-as="l">-->
+                                  <t t-if="l.package_id.packing_type != line.package_id.packing_type">
+                                    <t t-set="diff_packing_type" t-value="l.package_id.packing_type"/>
+                                  </t>
+                                  <t t-if="line.name == l.name and line.package_id.packing_type == l.package_id.packing_type">
+                                    <t t-set="sum_packing_qty_line" t-value="sum_packing_qty_line + l.package_id.packing_quantity"/>
+                                    <!--<t t-if="l.package_id.packing_type == line.package_id.packing_type" t-set="sam_packing_type_product" t-value="l.name"/>-->
+                                    <!--<t t-if="l.package_id.packing_type != line.package_id.packing_type" t-set="diff_packing_type_product" t-value="l.name"/>-->
+                                    <t t-set="sum_qty_line" t-value="sum_qty_line + l.quantity"/>
+                                    <!--<t t-if="l.package_id.packing_type == line.package_id.packing_type" t-set="sum_packing_qty_line" t-value="sum_packing_qty_line + l.package_id.packing_quantity"/>-->
+                                    <!--<t t-if="l.package_id.packing_type == line.package_id.packing_type" t-set="sam_packing_type" t-value="l.package_id.packing_type"/>-->
+                                    <!--<t t-if="l.package_id.packing_type != line.package_id.packing_type" t-set="diff_packing_type" t-value="l.package_id.packing_type"/>-->
+                                    <!--<t t-if="l.package_id.packing_type != line.package_id.packing_type" t-set="sum_diff_packing_qty_line" t-value="sum_diff_packing_qty_line + l.package_id.packing_quantity"/>-->
+                                    <t t-set="sum_price_subtotal" t-value="sum_price_subtotal + l.price_subtotal"/>
+                                  </t>
+                                </t>
+                                <t t-if="(not line.name == sum_product_name) or (not line.package_id.packing_type == same_packing_type)">
+                                <tr>
+                                  <t t-set="table_index" t-value="table_index + 1"/>
+
+                                  <!--<td style="width:5%; padding: 4px;">-->
+                                  <!--  <t t-esc="index"/>-->
+                                  <!--  <t t-set="index" t-value="index+1"/>-->
+                                  <!--</td>-->
+                                  <td style="width:37%; padding:4px; text-align: left; border-right: 1px solid black; font-size:14.5px;">
+                                    <!--<t t-set="p_name" t-value="line.product_id.name"/>-->
+                                    <t t-set="p_name" t-value="line.name"/>
+                                    <!--<t t-set="pr_name" t-value="p_name.split(' ')"/>-->
+                                    <!--<t t-esc="pr_name"/>-->
+                                    <!--<t t-esc="pr_name[0]"/><t t-esc="pr_name[1]"/>-->
+                                    <!--<t t-esc="p_name"/>-->
+
+
+                                    <!--<t t-esc="prd_name[0]"/>-->
+                                    <!--<t t-esc="prd_name[1]"/>-->
+                                    <t t-set="p_name" t-value="p_name.replace(' ' , ',')"/>
+                                    <t t-set="pr_name" t-value="p_name.split(',')"/>
+                                    <!--<t t-esc="pr_name"/>-->
+                                    <t t-set="count" t-value="0"/>
+                                    <t t-foreach="pr_name" t-as="p">
+                                      <t t-set="count" t-value="count+1"/>
+                                    </t>
+                                    <!--<t t-esc="count"/>-->
+                                    <!--<t t-if="count == 1" t-esc="pr_name[0]"/>-->
+                                    <!--<span t-esc="pr_name" t-value="p_name[0]"/>-->
+                                    <span t-if="line.package_id.shipping_grade == 'fresh'" t-esc="sum_packing_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 0}"/><span t-if="line.package_id.shipping_grade == 'fresh' and line.package_id.packing_type == 'thaan'" style="margin-left:3px;">Pcs</span><span t-if="line.package_id.shipping_grade == 'fresh' and not line.package_id.packing_type == 'thaan'" t-field="line.package_id.packing_type" style="margin-left:3px;"/>&#160;
+                                    <t t-if="pr_name and line.package_id.shipping_grade == 'fresh'">
+                                      <!--<t t-set="prd_width" t-value="pr_name[2]"/>-->
+                                      <!--<span t-esc="prd_name[0]"/><span t-esc="pr_name[1]"/><span t-esc="pr_name[3]"/>-->
+                                      <span t-if="pr_name" t-esc="pr_name[0]"/>&#160;
+                                      <span t-if="count &gt; 1" t-esc="pr_name[1]"/> 
+                                      <span t-if="count &gt; 1 and line.package_id.shipping_grade == 'fresh'" t-esc="pr_name[2]"/> 
+                                      <!--<spant- t-esc="prd_width"/>-->
+                                      <t t-foreach="line.analytic_tag_ids.sorted(key=lambda a: (a.sequence), reverse=False)" t-as="tag">
+                                <!--        <t t-if="t.id==tag.id">-->
+                                        <span t-esc="tag.name"/>
+                                      </t>
+                                      </t>
+                                      <span t-if="not line.name == 'Cut Piece' and not line.name == 'B-Grade'" t-field="line.product_id.product_template_attribute_value_ids.name"/>
+
+                                    <!--</t>-->
+                                    <span t-if="not line.product_id or line.name == 'B-Grade' or line.name == 'Cut Piece'" t-esc="line.name"/>
+                                    <!--<span t-if="line.name == 'B-Grade'" t-esc="line.name"/>-->
+                                    </td>
+                                  <!--<td style="width:8%; padding: 4px; text-align: right; border-right: 1px solid black; font-size:14.5px;">-->
+                                  <!--  <span t-if="line.package_id.shipping_grade == 'fresh'" t-esc="sum_packing_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 0}"/><span t-if="line.package_id.shipping_grade == 'fresh' and line.package_id.packing_type == 'thaan'" style="margin-left:3px;">Pcs</span><span t-if="line.package_id.shipping_grade == 'fresh' and not line.package_id.packing_type == 'thaan'" t-field="line.package_id.packing_type" style="margin-left:3px;"/>-->
+                                    <!--<span t-if="sum_diff_packing_qty_line" t-esc="sum_diff_packing_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span t-if="sum_diff_packing_qty_line" t-field="line.package_id.packing_type" style="margin-left:3px;"/>-->
+                                    <!--<span t-esc="sum_diff_packing_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span t-esc="diff_packing_type" style="margin-left:3px;"/>-->
+                                    <!--<span t-esc="diff_packing_type"/>-->
+                                  <!--  </td>-->
+                                  <!--<td style="width:5%; padding: 4px;"><span t-field="line.package_id.packing_quantity"/></td>-->
+                                  <!--<td style="width:6%; padding: 4px; text-align: right; border-right: 1px solid black; font-size:14.5px;"><span t-if="line.package_id.shipping_grade == 'fresh'" t-field="line.product_id.product_width" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/></td>-->
+                                  <!--Category-->
+                                <!--  <td style="width:8%; padding: 4px; text-align: left; border-right: 1px solid black; font-size:14.5px;">-->
+                                <!--    <t t-foreach="line.analytic_tag_ids.sorted(key=lambda a: (a.name), reverse=True)" t-as="tag">-->
+                                <!--        <t t-if="t.id==tag.id">-->
+                                <!--            <span t-esc="tag.name"/>-->
+                                <!--        </t>-->
+                                <!--    </t>-->
+                                <!--  </td>-->
+                                <!--Category End-->
+                                <!--Color-->
+                                  <!--<td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;"><span t-if="not line.name == 'Cut Piece' and not line.name == 'B-Grade'" t-field="line.product_id.product_template_attribute_value_ids.name"/></td>-->
+                                  <!--Color End-->
+                                  <!--Dyed White tag-->
+                                <!--<td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">-->
+                                <!--  <t t-foreach="line.analytic_tag_ids" t-as="tag">-->
+                                <!--    <t t-if="tag.name == 'White'">-->
+                                <!--      <span t-esc="tag.name"/>-->
+                                <!--    </t>-->
+                                <!--    <t t-if="tag.name in ('Reactive', 'Dyed', 'Direct', 'VAT')">-->
+                                <!--      <span t-esc="tag.name"/>-->
+                                <!--    </t>-->
+                                <!--  </t>-->
+                                <!--</td>-->
+                                 <!--End-->
+                                  <!--<td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;"><span t-if="not line.name == 'Cut Piece' and not line.name == 'B-Grade'" t-field="line.product_id.product_template_attribute_value_ids.name"/></td>-->
+                                <!--  <t t-foreach="set(tags)" t-as="t">-->
+                                <!--    <td style="width:6%; padding: 5px;">-->
+                                <!--    <t t-foreach="line.analytic_tag_ids" t-as="tag">-->
+                                <!--        <t t-if="t.id==tag.id">-->
+                                <!--            <span t-esc="tag.name"/>-->
+                                <!--        </t>-->
+                                <!--    </t>-->
+                                <!--    </td>-->
+                                <!--</t>-->
+
+                                <!--Comment-->
+                                <!--<td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">-->
+                                  <!--tag not in dyed or white-->
+                                <!--  <t t-foreach="line.analytic_tag_ids" t-as="tags">-->
+                                <!--    <t t-if="not tags.name in ('White', 'Dyed')">-->
+                                <!--      <span t-esc="tags.name"/>-->
+                                <!--    </t>-->
+                                    <!--<t t-if="tags.name != 'Dyed'">-->
+                                    <!--  <span t-esc="tags.name"/>-->
+                                    <!--</t>-->
+                                <!--  </t>-->
+                                <!--</td>-->
+
+                                <!--Comment-->
+                                <!--End-->
+                                  <!--<td style="width:12%;"><span t-field="line.analytic_tag_ids"/></td>-->
+                                  <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;">
+                                    <span t-esc="sum_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                  </td>
+                                  <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;">
+                                    <span t-esc="'{0:,.3f}'.format(line.price_unit)"/>
+                                    <!--<span t-field="line.price_unit" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 3}"/>-->
+                                    </td>
+                                  <!--<td><span t-field="line.invoice_line_tax_ids"/></td>-->
+                                  <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;"><span t-esc="'{0:,.2f}'.format(int(sum_price_subtotal))"/></td>
+                                </tr>
+                                </t>
+                                <t t-set="same_packing_type" t-value="line.package_id.packing_type"/>
+                                <t t-set="sum_product_name" t-value="line.name"/>
+
+                          </t>
+                          </t>
+                          </t>
+                          <t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: (x.package_id.shipping_grade == 'fresh', x.shipping_quantity_r == 0, x.name == 'B-Grade'), reverse=True)" t-as="line">
+                          <t t-if="line.name == 'B-Grade' or line.name == 'Cut Piece'">
+                                <t t-set="sum_qty_line" t-value="0"/>
+                                <t t-set="diff_packing_type" t-value=""/>
+                                <t t-set="sam_packing_type_product" t-value=""/>
+                                <t t-set="diff_packing_type_product" t-value=""/>
+                                <t t-set="sum_packing_qty_line" t-value="0"/>
+                                <t t-set="sum_diff_packing_qty_line" t-value="0"/>
+                                <t t-set="sam_packing_type" t-value=""/>
+                                <t t-set="diff_packing_type" t-value=""/>
+                                <t t-set="sum_price_subtotal" t-value="0"/>
+                                <t t-if="line.product_id and line.package_id.shipping_grade == 'fresh'" t-set="sum_fresh_qty" t-value="sum_fresh_qty + line.quantity"/>
+                                <t t-if="line.product_id and line.package_id.shipping_grade == 'b'" t-set="sum_bgrade_qty" t-value="sum_bgrade_qty + line.quantity"/>
+                                <t t-if="line.product_id and line.package_id.shipping_grade == 'c'" t-set="sum_cgrade_qty" t-value="sum_cgrade_qty + line.quantity"/>
+                                <t t-set="sum_tot_invoice_qty" t-value="sum_fresh_qty + sum_bgrade_qty + sum_cgrade_qty"/>
+                                <!--<t t-if="sum_fresh_qty and sum_bgrade_qty" t-set="sum_tot_invoice_qty" t-value="sum_fresh_qty + sum_bgrade_qty"/>-->
+                                <!--<t t-if="sum_fresh_qty and sum_cgrade_qty" t-set="sum_tot_invoice_qty" t-value="sum_fresh_qty + sum_cgrade_qty"/>-->
+                                <t t-if="not sum_fresh_qty and not sum_bgrade_qty and not sum_cgrade_qty" t-set="sum_tot_invoice_qty" t-value="sum_tot_invoice_qty + line.quantity"/>
+                                <t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: (x.package_id.shipping_grade == 'fresh', x.shipping_quantity_r == 0, x.name == 'B-Grade'), reverse=True)" t-as="l">
+                                <!--<t t-foreach="doc.invoice_line_ids.sorted(key=lambda x: (x.name, x.package_id.packing_type, x.price_unit), reverse=True)" t-as="l">-->
+                                  <t t-if="l.package_id.packing_type != line.package_id.packing_type">
+                                    <t t-set="diff_packing_type" t-value="l.package_id.packing_type"/>
+                                  </t>
+                                  <t t-if="line.name == l.name and line.package_id.packing_type == l.package_id.packing_type">
+                                    <t t-set="sum_packing_qty_line" t-value="sum_packing_qty_line + l.package_id.packing_quantity"/>
+                                    <!--<t t-if="l.package_id.packing_type == line.package_id.packing_type" t-set="sam_packing_type_product" t-value="l.name"/>-->
+                                    <!--<t t-if="l.package_id.packing_type != line.package_id.packing_type" t-set="diff_packing_type_product" t-value="l.name"/>-->
+                                    <t t-set="sum_qty_line" t-value="sum_qty_line + l.quantity"/>
+                                    <!--<t t-if="l.package_id.packing_type == line.package_id.packing_type" t-set="sum_packing_qty_line" t-value="sum_packing_qty_line + l.package_id.packing_quantity"/>-->
+                                    <!--<t t-if="l.package_id.packing_type == line.package_id.packing_type" t-set="sam_packing_type" t-value="l.package_id.packing_type"/>-->
+                                    <!--<t t-if="l.package_id.packing_type != line.package_id.packing_type" t-set="diff_packing_type" t-value="l.package_id.packing_type"/>-->
+                                    <!--<t t-if="l.package_id.packing_type != line.package_id.packing_type" t-set="sum_diff_packing_qty_line" t-value="sum_diff_packing_qty_line + l.package_id.packing_quantity"/>-->
+                                    <t t-set="sum_price_subtotal" t-value="sum_price_subtotal + l.price_subtotal"/>
+                                  </t>
+                                </t>
+                                <t t-if="(not line.name == sum_product_name) or (not line.package_id.packing_type == same_packing_type)">
+                                <tr>
+                                  <t t-set="table_index" t-value="table_index + 1"/>
+
+                                  <!--<td style="width:5%; padding: 4px;">-->
+                                  <!--  <t t-esc="index"/>-->
+                                  <!--  <t t-set="index" t-value="index+1"/>-->
+                                  <!--</td>-->
+                                  <td style="width:37%; padding:4px; text-align: left; border-right: 1px solid black; font-size:14.5px;">
+                                    <!--<t t-set="p_name" t-value="line.product_id.name"/>-->
+                                    <t t-set="p_name" t-value="line.name"/>
+                                    <!--<t t-set="pr_name" t-value="p_name.split(' ')"/>-->
+                                    <!--<t t-esc="pr_name"/>-->
+                                    <!--<t t-esc="pr_name[0]"/><t t-esc="pr_name[1]"/>-->
+                                    <!--<t t-esc="p_name"/>-->
+
+
+                                    <!--<t t-esc="prd_name[0]"/>-->
+                                    <!--<t t-esc="prd_name[1]"/>-->
+                                    <t t-set="p_name" t-value="p_name.replace(' ' , ',')"/>
+                                    <t t-set="pr_name" t-value="p_name.split(',')"/>
+                                    <!--<t t-esc="pr_name"/>-->
+                                    <t t-set="count" t-value="0"/>
+                                    <t t-foreach="pr_name" t-as="p">
+                                      <t t-set="count" t-value="count+1"/>
+                                    </t>
+                                    <!--<t t-esc="count"/>-->
+                                    <!--<t t-if="count == 1" t-esc="pr_name[0]"/>-->
+                                    <!--<span t-esc="pr_name" t-value="p_name[0]"/>-->
+                                    <span t-if="line.package_id.shipping_grade == 'fresh'" t-esc="sum_packing_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 0}"/><span t-if="line.package_id.shipping_grade == 'fresh' and line.package_id.packing_type == 'thaan'" style="margin-left:3px;">Pcs</span><span t-if="line.package_id.shipping_grade == 'fresh' and not line.package_id.packing_type == 'thaan'" t-field="line.package_id.packing_type" style="margin-left:3px;"/>&#160;
+                                    <t t-if="pr_name and line.package_id.shipping_grade == 'fresh'">
+                                      <!--<t t-set="prd_width" t-value="pr_name[2]"/>-->
+                                      <!--<span t-esc="prd_name[0]"/><span t-esc="pr_name[1]"/><span t-esc="pr_name[3]"/>-->
+                                      <span t-if="pr_name" t-esc="pr_name[0]"/>&#160;
+                                      <span t-if="count &gt; 1" t-esc="pr_name[1]"/> 
+                                      <span t-if="count &gt; 1 and line.package_id.shipping_grade == 'fresh'" t-esc="pr_name[2]"/> 
+                                      <!--<spant- t-esc="prd_width"/>-->
+                                      <t t-foreach="line.analytic_tag_ids.sorted(key=lambda a: (a.sequence), reverse=False)" t-as="tag">
+                                <!--        <t t-if="t.id==tag.id">-->
+                                        <span t-esc="tag.name"/>
+                                      </t>
+                                      </t>
+                                      <span t-if="not line.name == 'Cut Piece' and not line.name == 'B-Grade'" t-field="line.product_id.product_template_attribute_value_ids.name"/>
+
+                                    <!--</t>-->
+                                    <span t-if="not line.product_id or line.name == 'B-Grade' or line.name == 'Cut Piece'" t-esc="line.name"/>
+                                    <!--<span t-if="line.name == 'B-Grade'" t-esc="line.name"/>-->
+                                    </td>
+                                  <!--<td style="width:8%; padding: 4px; text-align: right; border-right: 1px solid black; font-size:14.5px;">-->
+                                  <!--  <span t-if="line.package_id.shipping_grade == 'fresh'" t-esc="sum_packing_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 0}"/><span t-if="line.package_id.shipping_grade == 'fresh' and line.package_id.packing_type == 'thaan'" style="margin-left:3px;">Pcs</span><span t-if="line.package_id.shipping_grade == 'fresh' and not line.package_id.packing_type == 'thaan'" t-field="line.package_id.packing_type" style="margin-left:3px;"/>-->
+                                    <!--<span t-if="sum_diff_packing_qty_line" t-esc="sum_diff_packing_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span t-if="sum_diff_packing_qty_line" t-field="line.package_id.packing_type" style="margin-left:3px;"/>-->
+                                    <!--<span t-esc="sum_diff_packing_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span t-esc="diff_packing_type" style="margin-left:3px;"/>-->
+                                    <!--<span t-esc="diff_packing_type"/>-->
+                                  <!--  </td>-->
+                                  <!--<td style="width:5%; padding: 4px;"><span t-field="line.package_id.packing_quantity"/></td>-->
+                                  <!--<td style="width:6%; padding: 4px; text-align: right; border-right: 1px solid black; font-size:14.5px;"><span t-if="line.package_id.shipping_grade == 'fresh'" t-field="line.product_id.product_width" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/></td>-->
+                                  <!--Category-->
+                                <!--  <td style="width:8%; padding: 4px; text-align: left; border-right: 1px solid black; font-size:14.5px;">-->
+                                <!--    <t t-foreach="line.analytic_tag_ids.sorted(key=lambda a: (a.name), reverse=True)" t-as="tag">-->
+                                <!--        <t t-if="t.id==tag.id">-->
+                                <!--            <span t-esc="tag.name"/>-->
+                                <!--        </t>-->
+                                <!--    </t>-->
+                                <!--  </td>-->
+                                <!--Category End-->
+                                <!--Color-->
+                                  <!--<td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;"><span t-if="not line.name == 'Cut Piece' and not line.name == 'B-Grade'" t-field="line.product_id.product_template_attribute_value_ids.name"/></td>-->
+                                  <!--Color End-->
+                                  <!--Dyed White tag-->
+                                <!--<td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">-->
+                                <!--  <t t-foreach="line.analytic_tag_ids" t-as="tag">-->
+                                <!--    <t t-if="tag.name == 'White'">-->
+                                <!--      <span t-esc="tag.name"/>-->
+                                <!--    </t>-->
+                                <!--    <t t-if="tag.name in ('Reactive', 'Dyed', 'Direct', 'VAT')">-->
+                                <!--      <span t-esc="tag.name"/>-->
+                                <!--    </t>-->
+                                <!--  </t>-->
+                                <!--</td>-->
+                                 <!--End-->
+                                  <!--<td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;"><span t-if="not line.name == 'Cut Piece' and not line.name == 'B-Grade'" t-field="line.product_id.product_template_attribute_value_ids.name"/></td>-->
+                                <!--  <t t-foreach="set(tags)" t-as="t">-->
+                                <!--    <td style="width:6%; padding: 5px;">-->
+                                <!--    <t t-foreach="line.analytic_tag_ids" t-as="tag">-->
+                                <!--        <t t-if="t.id==tag.id">-->
+                                <!--            <span t-esc="tag.name"/>-->
+                                <!--        </t>-->
+                                <!--    </t>-->
+                                <!--    </td>-->
+                                <!--</t>-->
+
+                                <!--Comment-->
+                                <!--<td style="width:6%; padding: 4px; text-align: left; border-right: 1px solid black;">-->
+                                  <!--tag not in dyed or white-->
+                                <!--  <t t-foreach="line.analytic_tag_ids" t-as="tags">-->
+                                <!--    <t t-if="not tags.name in ('White', 'Dyed')">-->
+                                <!--      <span t-esc="tags.name"/>-->
+                                <!--    </t>-->
+                                    <!--<t t-if="tags.name != 'Dyed'">-->
+                                    <!--  <span t-esc="tags.name"/>-->
+                                    <!--</t>-->
+                                <!--  </t>-->
+                                <!--</td>-->
+
+                                <!--Comment-->
+                                <!--End-->
+                                  <!--<td style="width:12%;"><span t-field="line.analytic_tag_ids"/></td>-->
+                                  <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;">
+                                    <span t-esc="sum_qty_line" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                  </td>
+                                  <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;">
+                                    <span t-esc="'{0:,.3f}'.format(line.price_unit)"/>
+                                    <!--<span t-field="line.price_unit" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 3}"/>-->
+                                    </td>
+                                  <!--<td><span t-field="line.invoice_line_tax_ids"/></td>-->
+                                  <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;"><span t-esc="'{0:,.2f}'.format(int(sum_price_subtotal))"/></td>
+                                </tr>
+                                </t>
+                                <t t-set="same_packing_type" t-value="line.package_id.packing_type"/>
+                                <t t-set="sum_product_name" t-value="line.name"/>
+
+                          </t>
+                         </t>
+                        </tbody>
+                        <!--<div t-if="table_index &gt; 13" style="page-break-before:always;"></div>-->
+                        <!--<tr style="border:1px solid black;">-->
+                        <!--  <td colspan="6" style="padding:3px;"><strong>Total Invoice Quantity:</strong></td>-->
+                        <!--  <td colspan="6" style="padding:3px;"><t t-esc="sum_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>-->
+                        <!--</tr>-->
+                      </table>
+                    </div>
+                    <!--<div t-if="table_index &gt; 13" style="page-break-before:always;"></div>-->
+                    <div class="row">
+                      <div class="col-8" style="margin-left:-12px;">
+                        <br/>
+                        <table style="width:100%; margin-top:-15px;">
+                          <tbody>
+                            <tr>
+                              <td style="width:25%;"><strong>Total Fresh:</strong></td>
+                              <td style="text-align: right;">
+                                <t t-esc="sum_fresh_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <span>mtr</span></td>
+                            </tr>
+                          </tbody>
+
+                        </table>
+                        <table style="width:100%; margin-top:5px;">
+                          <tbody>
+                            <tr>
+                              <td style="width:25%;"><strong>Total B-Grade:</strong></td>
+                              <td style="text-align: right;">
+                                <t t-esc="sum_bgrade_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <span>mtr</span></td>
+                            </tr>
+                          </tbody>
+
+                        </table>
+                        <table style="width:100%; margin-top:5px;">
+                          <tbody>
+                            <tr>
+                              <td style="width:25%;"><strong>Total C-Grade:</strong></td>
+                              <td style="text-align: right;">
+                                <t t-esc="sum_cgrade_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <span>mtr</span></td>
+                            </tr>
+                          </tbody>
+
+                        </table>
+                        <table style="width:100%; margin-top:5px;">
+                          <tbody>
+                            <tr style="border-top:1px solid black;">
+                              <td style="width:25%;"><strong>Total Quantity:</strong></td>
+                              <td style="text-align: right;">
+                                <t t-esc="sum_tot_invoice_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <span>mtr</span></td>
+                            </tr>
+                          </tbody>
+
+                        </table>
+                        <!--</tr>-->
+                        <!--<table style="width:100%; margin-top:10px;">-->
+                        <!--  <tbody>-->
+                        <!--    <tr>-->
+                        <!--      <td><strong style="margin-top:10px;">Greige Details:</strong></td>-->
+                        <!--    </tr>-->
+                        <!--  </tbody>-->
+                        <!--</table>-->
+
+                        <t t-set="sum_produced_qty" t-value="0"/>
+                        <t t-set="sum_rec_qty" t-value="0"/>
+                        <t t-set="rem_qty" t-value="0"/>
+                        <t t-foreach="request.env['mrp.production'].search([('product_id.categ_id','=', 237),('sale_id','=', doc.invoice_origin)])" t-as="production_order">
+                          <t t-foreach="production_order.finished_move_line_ids" t-as="production_line">
+                            <t t-set="sum_produced_qty" t-value="sum_produced_qty + production_line.qty_done"/>
+                          </t>
+                        </t>
+                        <t t-foreach="request.env['stock.picking'].search([('sale_tag','=', doc.invoice_origin),('move_line_ids.lot_id.cloth_desc','=', doc.invoice_origin)])" t-as="picking_ref">
+                          <t t-foreach="picking_ref.move_line_ids" t-as="move_line">
+                            <!--<t t-foreach="move_line.env['account.invoice.line'].search([('product_id.name','=', move_line.lot_id.cloth_desc)])" t-as="inv_line">-->
+                              <t t-set="sum_rec_qty" t-value="sum_rec_qty + move_line.qty_done"/>
+                          <!--</t>-->
+                          </t>
+                        </t>
+                        <t t-set="rem_qty" t-value="rem_qty + sum_rec_qty - sum_produced_qty"/>
+                        <!--Greige Details Section Start-->
+                        <!--<table style="width:100%; margin-top:10px;">-->
+                        <!--  <tbody>-->
+                        <!--    <tr>-->
+                        <!--      <td style="width:25%;"><strong>Total Greige Used:</strong></td>-->
+                        <!--      <td>______________________ mtr</td>-->
+                        <!--    </tr>-->
+
+                            <!--<td><t t-esc="sum_rec_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>-->
+
+
+                        <!--  </tbody>-->
+                        <!--</table>-->
+                        <!--Greige Details Section End-->
+                        <table style="width:100%; margin-top:10px;">
+                          <tbody>
+                            <tr>
+                              <td style="width:25%;"><strong>Amount in Words:</strong></td>
+                              <td><t t-esc="doc.amt_words"/></td>
+                            </tr>
+                          </tbody>
+
+
+                        </table>
+
+                          <!--<tr>-->
+                          <!--  <td style="width:40%;"><strong>Total Greige Stitched:</strong></td>-->
+                          <!--  <td><t t-esc="sum_produced_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>-->
+                          <!--</tr>-->
+                          <!--<tr>-->
+                          <!--  <td style="width:40%;"><strong>Remaining Qty:</strong></td>-->
+                          <!--  <td><t t-esc="rem_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>-->
+                          <!--</tr>-->
+
+
+
+                      </div>
+                      <div class="col-4" style="float:left; position:relative; border-left: 2px solid black; border-right: 2px solid black; border-bottom: 2px solid black; margin-left: 14px;">
+                        <!--<div class="row">-->
+                            <!--<div t-attf-class="#{'col-4' if report_type != 'html' else 'col-sm-6 col-md-6'} ml-auto">-->
+                                <table class="" style="margin-top:-15px;">
+                                    <tr class="o_subtotal" style="border-bottom: 1px solid #d9d9d4;">
+                                        <td style="padding:3px;"><strong>Subtotal</strong></td>
+                                        <td class="text-right" style="padding:3px;">
+                                            <span t-field="doc.amount_untaxed"/>
+                                        </td>
+                                    </tr>
+                                    <t t-foreach="doc.amount_by_group" t-as="amount_by_group">
+                                        <tr style="border-bottom: 1px solid #d9d9d4;">
+                                            <t t-if="len(doc.invoice_line_ids.tax_ids) == 1 and doc.amount_untaxed == amount_by_group[2]">
+                                                <td style="padding:3px;"><span t-esc="amount_by_group[0]"/></td>
+                                                <td class="text-right o_price_total" style="padding:3px;">
+                                                    <span t-esc="amount_by_group[3]"/>
+                                                </td>
+                                            </t>
+                                            <t t-else="">
+                                                <td style="padding:3px;">
+                                                    <span t-esc="amount_by_group[0]"/>
+                                                    <span>&amp;nbsp;<span>on</span>
+                                                        <t t-esc="amount_by_group[4]"/>
+                                                    </span>
+                                                </td>
+                                                <td class="text-right o_price_total" style="padding:3px;">
+                                                    <span t-esc="amount_by_group[3]"/>
+                                                </td>
+                                            </t>
+                                        </tr>
+                                    </t>
+                                    <br></br>
+                                    <tr class="" style="margin-top:0px;">
+                                        <td style="padding:3px;"><strong>Total</strong></td>
+                                        <td class="text-right" style="padding:3px;">
+                                            <span t-field="doc.amount_total"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            <!--</div>-->
+                        <!--</div>-->
+                        </div>
+                        </div>
+                      <div class="row">
+                          <div class="col-8" style="margin-left:-12px;">
+                            <strong>Greige Details:</strong>
+                            <table style="width:100%;">
+                              <tr>
+                                <td>
+                                  <td style="width:25%;"><strong>Total Greige Used:</strong></td>
+                                  <td><span>______________________ </span><span>mtr</span></td>
+                                </td>
+                              </tr>
+                            </table>
+                          </div>
+                        </div>
+                    <!--Page Break Always if Table row greatr than 17-->
+                    <div t-if="table_index &gt; 18" style="page-break-before:always;"/>
+                    <!--End Page break-->
+
+                    <!--<t t-esc="table_index"/>-->
+                    <!--Total Quantity Section-->
+                    <!--<div class="row" style="position: absolute; margin-top:200px;">-->
+                    <!--  <table style="width:100%;">-->
+                    <!--      <tr>-->
+                    <!--        <td style="width:78%;"><strong>Total Fresh:</strong></td>-->
+                    <!--        <td><t style="text-align: right;" t-esc="sum_fresh_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span style="text-align: right;">mtr</span></td>-->
+                    <!--      </tr>-->
+                    <!--      <tr>-->
+                    <!--        <td style="width:78%;"><strong>Total B-Grade:</strong></td>-->
+                    <!--        <td><t style="text-align: right;" t-esc="sum_bgrade_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span style="text-align: right;">mtr</span></td>-->
+                    <!--      </tr>-->
+                    <!--      <tr>-->
+                    <!--        <td style="width:78%;"><strong>Total C-Grade:</strong></td>-->
+                    <!--        <td><t style="text-align: right;" t-esc="sum_cgrade_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span style="text-align: right;">mtr</span></td>-->
+                    <!--      </tr>-->
+                    <!--      <tr style="border-top:1px solid black;">-->
+                    <!--        <td style="width:78%;"><strong>Total Quantity:</strong></td>-->
+                    <!--        <td><t style="text-align: right;"  t-esc="sum_tot_invoice_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/><span style="text-align: right;">mtr</span></td>-->
+                    <!--      </tr>-->
+                    <!--    </table>-->
+                    <!--</div>-->
+                    <!--Total Quantity Section End-->
+                    <!--Greige Details and SubTotal/Total Section Start-->
+                    <!--<div class="row" style="position:absolute; margin-top:300px;">-->
+                    <!--  <div class="col-8" style="margin-left:-12px;">-->
+                    <!--    <strong>Greige Details:</strong>-->
+                    <!--    <t t-set="sum_produced_qty" t-value="0"/>-->
+                    <!--    <t t-set="sum_rec_qty" t-value="0"/>-->
+                    <!--    <t t-set="rem_qty" t-value="0"/>-->
+                    <!--    <t t-foreach="request.env['mrp.production'].search([('product_id.categ_id','=', 237),('sale_id','=', doc.invoice_origin)])" t-as="production_order">-->
+                    <!--      <t t-foreach="production_order.finished_move_line_ids" t-as="production_line">-->
+                    <!--        <t t-set="sum_produced_qty" t-value="sum_produced_qty + production_line.qty_done"/>-->
+                    <!--      </t>-->
+                    <!--    </t>-->
+                    <!--    <t t-foreach="request.env['stock.picking'].search([('sale_tag','=', doc.invoice_origin),('move_line_ids.lot_id.cloth_desc','=', doc.invoice_origin)])" t-as="picking_ref">-->
+                    <!--      <t t-foreach="picking_ref.move_line_ids" t-as="move_line">-->
+                            <!--<t t-foreach="move_line.env['account.invoice.line'].search([('product_id.name','=', move_line.lot_id.cloth_desc)])" t-as="inv_line">-->
+                    <!--          <t t-set="sum_rec_qty" t-value="sum_rec_qty + move_line.qty_done"/>-->
+                          <!--</t>-->
+                    <!--      </t>-->
+                    <!--    </t>-->
+                    <!--    <t t-set="rem_qty" t-value="rem_qty + sum_rec_qty - sum_produced_qty"/>-->
+                        <!--<table style="width:100%;">-->
+                        <!--  <tr>-->
+                        <!--    <td style="width:20%;"><strong>Total Greige Used:</strong></td>-->
+                        <!--    <td><span>______________________ </span><span>mtr</span></td>-->
+                        <!--    <td><t t-esc="sum_rec_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>-->
+                        <!--  </tr>-->
+                          <!--<tr>-->
+                          <!--  <td style="width:40%;"><strong>Total Greige Stitched:</strong></td>-->
+                          <!--  <td><t t-esc="sum_produced_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>-->
+                          <!--</tr>-->
+                          <!--<tr>-->
+                          <!--  <td style="width:40%;"><strong>Remaining Qty:</strong></td>-->
+                          <!--  <td><t t-esc="rem_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/> m</td>-->
+                          <!--</tr>-->
+                    <!--      <tr style="margin-top:50px;">-->
+                    <!--        <td style="width:20%;"><strong>Amount in Words:</strong></td>-->
+                    <!--        <td><t t-esc="doc.amt_words"/></td>-->
+                    <!--      </tr>-->
+                      <!--  </table>-->
+                      <!--</div>-->
+                    <!--  <div class="clearfix col-4" style="float:left; position:relative;">-->
+                        <!--<div class="row">-->
+                            <!--<div t-attf-class="#{'col-4' if report_type != 'html' else 'col-sm-6 col-md-6'} ml-auto">-->
+                    <!--            <table class="table table-sm">-->
+                    <!--                <tr class="border-black o_subtotal" style="">-->
+                    <!--                    <td><strong>Subtotal</strong></td>-->
+                    <!--                    <td class="text-right">-->
+                    <!--                        <span t-field="doc.amount_untaxed"/>-->
+                    <!--                    </td>-->
+                    <!--                </tr>-->
+                    <!--                <t t-foreach="doc.amount_by_group" t-as="amount_by_group">-->
+                    <!--                    <tr>-->
+                    <!--                        <t t-if="len(doc.invoice_line_ids.tax_ids) == 1 and doc.amount_untaxed == amount_by_group[2]">-->
+                    <!--                            <td><span t-esc="amount_by_group[0]"/></td>-->
+                    <!--                            <td class="text-right o_price_total">-->
+                    <!--                                <span t-esc="amount_by_group[3]"/>-->
+                    <!--                            </td>-->
+                    <!--                        </t>-->
+                    <!--                        <t t-else="">-->
+                    <!--                            <td>-->
+                    <!--                                <span t-esc="amount_by_group[0]"/>-->
+                    <!--                                <span>&amp;nbsp;<span>on</span>-->
+                    <!--                                    <t t-esc="amount_by_group[4]"/>-->
+                    <!--                                </span>-->
+                    <!--                            </td>-->
+                    <!--                            <td class="text-right o_price_total">-->
+                    <!--                                <span t-esc="amount_by_group[3]"/>-->
+                    <!--                            </td>-->
+                    <!--                        </t>-->
+                    <!--                    </tr>-->
+                    <!--                </t>-->
+                    <!--                <tr class="border-black o_total">-->
+                    <!--                    <td><strong>Total</strong></td>-->
+                    <!--                    <td class="text-right">-->
+                    <!--                        <span t-field="doc.amount_total"/>-->
+                    <!--                    </td>-->
+                    <!--                </tr>-->
+                    <!--            </table>-->
+                            <!--</div>-->
+                        <!--</div>-->
+                    <!--    </div>-->
+                        <!--</div>-->
+                       <!--Greige Details and SubTotal/Total Section End -->
+                    <!--Check/Approved Signature Section Start-->
+                    <div class="row" style="position:absolute; margin-top:60px;">
+                      <div style="margin-top:10px;">
+                        <div style="float:left; margin-left:10px;">
+                          <span t-field="doc.create_uid.name" style="text-decoration: underline;"/>
+                          <br/>
+                          <div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Prepared By:</strong></div>
+
+                        </div>
+                        <div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Checked By:</strong></div>
+                   	</div>
+                   	<div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Verified By:</strong></div>
+                   	</div>
+                   	<div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Approved By:</strong></div>
+                   	</div>
+
+                      </div>
+                    </div>
+                    <!--Check/Approved Signature Section End-->
+                    <!--Note Section Start-->
+                    <div class="row" style="position:absolute; margin-top:130px;">
+                      <div class="col-12">
+                        <strong style="font-size:12px;">Note:</strong>
+                        <br/>
+                        <p style="font-size:11px;">We are only responsible for any deficiency in your Finish Fabric regarding Fresh &amp; B.C.P percentage &amp; also any other claim/problem untill the fabric laying in our premisis. Please take over your BCP meters wihtin maximum 1 month from the bill date. After that we are not responsible of your BCP meters.</p>
+                      </div>
+                    </div>
+                    <!--Note Section End-->
+                </div>
+            </t>
+        </t>
+        </t>
+    </template>
+</odoo>

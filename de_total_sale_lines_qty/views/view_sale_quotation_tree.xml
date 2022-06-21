@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="inherit_tree_view_sale_quotation" model="ir.ui.view">
+            <field name="name">Sale Order</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_quotation_tree"/>
+            <field name="arch" type="xml">
+                <field name="user_id" position="after">
+                	<field name="tot_order_qty"/>
+					<field name="tot_delivered_qty"/>
+					<field name="tot_invoiced_qty"/>
+            	</field>
+            </field>
+        </record>
+    </data>
+</odoo>

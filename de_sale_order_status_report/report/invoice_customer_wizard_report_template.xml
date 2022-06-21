@@ -1,0 +1,537 @@
+<odoo>
+    <template id="sale_status_report_pdf">
+      <t t-call="web.html_container">
+          <t t-foreach="docs" t-as="docs">
+              <div class="article o_report_layout_standard" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id">
+                  <div class="page">
+                      <h3 style=" text-align: center">Sale Order Status</h3>
+                      <br/>
+                      <t t-if="from_sale_ids and not owner_sale_ids and not so_owner_sale_ids">
+                      <div clas="row">
+                          <p style="text-align:center;"><strong>From</strong><t t-esc="docs.from_sale_order.name"/><strong>To</strong><t t-esc="docs.to_sale_order.name"/></p>
+                      </div>
+
+                      <div class="row">
+                          <table style="width: 100%; border: 1px solid black;">
+                              <thead>
+                                  <tr style="border:1px solid black;">
+                                      <th style="width: 15%; border:1px solid black; padding:4px;">MO#</th>
+                                      <th style="width: 15%; border:1px solid black; padding:4px;">Customer</th>
+                                      <th style="width: 25%; border:1px solid black; padding:4px;">Product</th>
+                                      <th style="width: 10%; border:1px solid black; padding:4px;">Order Qty</th>
+                                      <th style="width: 10%; border:1px solid black; padding:4px;">S.Qty</th>
+                                      <th style="width: 10%; border:1px solid black; padding:4px;">P.Qty</th>
+                                      <th style="width: 10%; border:1px solid black; padding:4px;">F.Qty</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  <t t-set="stitch_mo_qty" t-value="0"/>
+                                  <t t-set="proce_mo_qty" t-value="0"/>
+                                  <t t-set="finish_mo_oqty" t-value="0"/>
+                                  <t t-set="finish_mo_dqty" t-value="0"/>
+                                  <t t-foreach="from_sale_ids.sorted(key=lambda a: a.name)" t-as="so">
+                                      <t t-set="so_no" t-value="0"/>
+                                      <t t-set="unique_so_no" t-value="0"/>
+                                      <t t-set="stitch_mo_num" t-value="0"/>
+                                      <t t-set="proc_mo_num" t-value="0"/>
+<!--                                       <t t-set="sum_stitch_mo_qty" t-value="0"/> -->
+<!--                                       <t t-set="sum_proce_mo_qty" t-value="0"/> -->
+<!--                                       <t t-set="sum_finish_mo_oqty" t-value="0"/> -->
+<!--                                       <t t-set="sum_finish_mo_dqty" t-value="0"/> -->
+                                      <t t-set="tot_finish_mo_oqty" t-value="0"/>
+                                      <t t-set="tot_stitch_mo_qty" t-value="0"/>
+                                      <t t-set="tot_proce_mo_qty" t-value="0"/>
+                                      <t t-set="tot_finish_mo_dqty" t-value="0"/>
+                                      <t t-foreach="from_sale_ids.sorted(key=lambda b: b.name)" t-as="so_name">
+                                          <t t-if="so_name.name == so.name">
+                                              <t t-set="so_no" t-value="so_name.name"/>
+                                              <t t-set="unique_so_no" t-value="set(so_no)"/>
+                                          </t>
+                                      </t>
+                                      <tr style="width: 100%; text-align:center; border: 1px solid black; background-color: #595959;">
+                                          <td colspan="7">
+                                              <t t-esc="so_no"/>
+                                          </td>
+                                      </tr>
+                                      <t t-set="fmo_num" t-value="0"/>
+                                      <t t-set="unique_fmo_num" t-value="0"/>
+                                      <t t-set="fmo_no" t-value="0"/>
+                                      <t t-foreach="request.env['mrp.production'].search([('origin','=', so_no), ('state','!=', 'cancel')])" t-as="finish_mo_no">
+                                          <t t-if="'-' in finish_mo_no.name">
+                                              <t t-set="fmo_no" t-value="finish_mo_no.name.split('-')"/>
+                                              <t t-set="fmo_num" t-value="fmo_no[0]"/>
+<!--                                               <t t-if="fmo_num" t-set="unique_fmo_num" t-value="set(fmo_num)"/> -->
+                                          </t>
+                                          <t t-if="not '-' in finish_mo_no.name">
+                                              <t t-set="fmo_no" t-value="finish_mo_no.name"/>
+<!--                                               <t t-set="fmo_num" t-value="fmo_no[0]"/> -->
+<!--                                               <t t-if="fmo_num" t-set="unique_fmo_num" t-value="set(fmo_num)"/> -->
+                                          </t>
+                                      </t>
+
+<!--                                       <t t-esc="fmo_num"/> -->
+                                     <t t-set="exist_fmo_num" t-value="0"/>
+
+                                     <t t-foreach="request.env['mrp.production'].search([('origin','=', so_no), ('state','!=', 'cancel')])" t-as="finish_mo">
+                                          <t t-set="proc_mo_num" t-value="0"/>
+                                          <t t-set="stitch_mo_num" t-value="0"/>
+                                          <t t-set="sum_stitch_mo_qty" t-value="0"/>
+                                          <t t-set="sum_proce_mo_qty" t-value="0"/>
+                                          <t t-set="sum_finish_mo_oqty" t-value="0"/>
+                                          <t t-set="sum_finish_mo_dqty" t-value="0"/>
+
+
+
+                                         <t t-if="not'-' in finish_mo.name">
+                                           <t t-set="fmo_num" t-value="finish_mo.name"/>
+                                         </t>
+                                         <t t-if="'-' in finish_mo.name">
+                                             <t t-set="fmo_num" t-value="finish_mo.name.split('-')"/>
+                                             <t t-set="fmo_num" t-value="fmo_num[0]"/>
+                                         </t>
+                                          <t t-set="tot_finish_mo_num" t-value="0"/>
+                                          <t t-set="tot_finish_mo_dqty" t-value="0"/>
+                                          <t t-foreach="request.env['mrp.production'].search([('origin','=', so_no), ('state','!=', 'cancel')])" t-as="bfinish_mo">
+                                          <t t-if="not'-' in bfinish_mo.name">
+                                           <t t-set="extra_fmo_num" t-value="bfinish_mo.name"/>
+                                         </t>
+                                            <t t-if="'-' in bfinish_mo.name">
+                                             <t t-set="extra_fmo_num" t-value="bfinish_mo.name.split('-')"/>
+                                             <t t-set="extra_fmo_num" t-value="extra_fmo_num[0]"/>
+                                            </t>
+                                              <t t-if="extra_fmo_num == fmo_num">
+                                                  <t t-set="tot_finish_mo_num" t-value="tot_finish_mo_num + bfinish_mo.product_qty"/>
+                                                  <t t-set="tot_finish_mo_dqty" t-value="tot_finish_mo_dqty + bfinish_mo.qty_producing"/>
+                                              </t>
+                                          </t>
+                                         <t t-foreach="request.env['mrp.production'].search([('origin','=', fmo_num), ('x_studio_category','=', 'Processed'), ('state','!=', 'cancel')])" t-as="process_mo">
+                                              <t t-set="proc_mo_num" t-value="process_mo.name"/>
+<!--                                               <t t-set="sum_proce_mo_qty" t-value="sum_proce_mo_qty + process_mo.qty_producing"/> -->
+                                          </t>
+                                          <t t-foreach="request.env['mrp.production'].search([('origin','=', proc_mo_num), ('x_studio_category','=', 'Stitched'), ('state','!=', 'cancel')])" t-as="stitch_mo">
+                                              <t t-set="stitch_mo_num" t-value="0"/>
+                                          </t>
+                                         <t t-if="exist_fmo_num != fmo_num">
+
+                                          <tr>
+                                              <td style="width:12%;">
+                                                      <t t-esc="fmo_num"/>
+
+<!--                                                   <t t-if="fmo_num" t-esc="fmo_num"/> -->
+                                              </td>
+                                              <td style="width:15%;">
+                                                  <t t-esc="so.partner_id.name"/>
+                                              </td>
+                                              <td style="width:25%;">
+                                                  <t t-esc="finish_mo.product_id.name"/> (<t t-esc="finish_mo.product_id.product_template_attribute_value_ids.name"/>)
+                                              </td>
+                                              <td style="width:10%;">
+                                                  <t t-esc="tot_finish_mo_num"/>
+                                                  <t t-set="tot_finish_mo_oqty" t-value="tot_finish_mo_oqty + tot_finish_mo_num"/>
+                                              </td>
+                                              <td style="width:10%;">
+                                                 <t t-foreach="request.env['mrp.production'].search([('origin','=', proc_mo_num), ('x_studio_category','=', 'Stitched'), ('state','!=', 'cancel')])" t-as="stitch_mo">
+                                                     <t t-set="stitch_mo_num" t-value="stitch_mo.name"/>
+                                                     <t t-set="sum_stitch_mo_qty" t-value="sum_stitch_mo_qty + stitch_mo.qty_producing"/>
+<!--                                                      <t t-esc="stitch_mo.qty_producing"/> -->
+                                                     <t t-set="tot_stitch_mo_qty" t-value="tot_stitch_mo_qty + stitch_mo.qty_producing"/>
+                                                  </t>
+                                                  <t t-esc="sum_stitch_mo_qty"/>
+                                              </td>
+                                              <td style="width:10%;">
+                                                  <t t-foreach="request.env['mrp.production'].search([('origin','=', fmo_num), ('x_studio_category','=', 'Processed'), ('state','!=', 'cancel')])" t-as="process_mo">
+                                                      <t t-set="proc_mo_num" t-value="process_mo.name"/>
+                                                      <t t-set="sum_proce_mo_qty" t-value="sum_proce_mo_qty + process_mo.qty_producing"/>
+<!--                                                       <t t-esc="process_mo.qty_producing"/> -->
+
+                                                      <t t-set="tot_proce_mo_qty" t-value="tot_proce_mo_qty + process_mo.qty_producing"/>
+                                                  </t>
+
+                                                  <t t-esc="sum_proce_mo_qty"/>
+                                              </td>
+                                              <td style="width:10%;">
+<!--                                                   <t t-esc="finish_mo.qty_producing"/> -->
+                                                  <t t-esc="tot_finish_mo_dqty"/>
+                                                  <t t-set="tot_finish_mo_dqty" t-value="tot_finish_mo_dqty + finish_mo.qty_producing"/>
+                                              </td>
+                                          </tr>
+                                          <t t-set="exist_fmo_num" t-value="fmo_num"/>
+                                         </t>
+                                     </t>
+
+                                     <t t-if="so_no==so.name">
+                                         <tr style="border:1px solid black;">
+                                             <td colspan="3" style="padding-left:5px; color:blue;">Total</td>
+                                             <td>
+                                                 <t t-esc="'{0:,.2f}'.format(tot_finish_mo_oqty)"/>
+                                                 <t t-set="finish_mo_oqty" t-value="finish_mo_oqty + tot_finish_mo_oqty"/>
+                                             </td>
+                                             <td>
+                                                 <t t-esc="'{0:,.2f}'.format(tot_stitch_mo_qty)"/>
+                                                 <t t-set="stitch_mo_qty" t-value="stitch_mo_qty + tot_stitch_mo_qty"/>
+                                             </td>
+                                             <td>
+                                                 <t t-esc="'{0:,.2f}'.format(tot_proce_mo_qty)"/>
+                                                 <t t-set="proce_mo_qty" t-value="proce_mo_qty + tot_proce_mo_qty"/>
+                                             </td>
+                                             <td>
+                                                 <t t-esc="'{0:,.2f}'.format(tot_finish_mo_dqty)"/>
+                                                 <t t-set="finish_mo_dqty" t-value="finish_mo_dqty + tot_finish_mo_dqty"/>
+                                             </td>
+                                         </tr>
+                                      </t>
+                                  </t>
+                                  <tr style="border:1px solid black;">
+                                      <td colspan="3"><strong>Total</strong></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(finish_mo_oqty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(stitch_mo_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(proce_mo_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(finish_mo_dqty)"/></td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                      </t>
+
+                      <t t-if="so_owner_sale_ids and from_sale_ids">
+                          <div class="row">
+                              <table style="width: 100%; border: 1px solid black;">
+                                  <thead>
+                                      <tr style="border:1px solid black;">
+                                          <th style="width: 15%; border:1px solid black; padding:4px;">MO#</th>
+                                          <th style="width: 15%; border:1px solid black; padding:4px;">Customer</th>
+                                          <th style="width: 25%; border:1px solid black; padding:4px;">Product</th>
+                                          <th style="width: 10%; border:1px solid black; padding:4px;">Order Qty</th>
+                                          <th style="width: 10%; border:1px solid black; padding:4px;">S.Qty</th>
+                                          <th style="width: 10%; border:1px solid black; padding:4px;">P.Qty</th>
+                                          <th style="width: 10%; border:1px solid black; padding:4px;">F.Qty</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      <t t-set="stitch_mo_qty" t-value="0"/>
+                                      <t t-set="proce_mo_qty" t-value="0"/>
+                                      <t t-set="finish_mo_oqty" t-value="0"/>
+                                      <t t-set="finish_mo_dqty" t-value="0"/>
+                                      <t t-set="partner_name" t-value="0"/>
+
+                                      <t t-foreach="so_owner_sale_ids.sorted(key=lambda a: (a.partner_id.name, a.name))" t-as="so_ow">
+                                          <t t-set="so_no" t-value="0"/>
+                                          <t t-set="unique_so_no" t-value="0"/>
+                                          <t t-set="stitch_mo_num" t-value="0"/>
+                                          <t t-set="proc_mo_num" t-value="0"/>
+    <!--                                       <t t-set="sum_stitch_mo_qty" t-value="0"/> -->
+    <!--                                       <t t-set="sum_proce_mo_qty" t-value="0"/> -->
+    <!--                                       <t t-set="sum_finish_mo_oqty" t-value="0"/> -->
+    <!--                                       <t t-set="sum_finish_mo_dqty" t-value="0"/> -->
+                                          <t t-set="tot_finish_mo_oqty" t-value="0"/>
+                                          <t t-set="tot_stitch_mo_qty" t-value="0"/>
+                                          <t t-set="tot_proce_mo_qty" t-value="0"/>
+                                          <t t-set="tot_finish_mo_dqty" t-value="0"/>
+                                          <t t-foreach="so_owner_sale_ids.sorted(key=lambda b: (b.partner_id.name, b.name))" t-as="own_so">
+                                              <t t-if="own_so.partner_id.name == so_ow.partner_id.name and own_so.name == so_ow.name">
+                                                  <t t-set="so_no" t-value="own_so.name"/>
+                                                  <t t-set="partner_name" t-value="own_so.partner_id.id"/>
+                                              </t>
+                                          </t>
+                                          <tr style="width: 100%; text-align:center; border: 1px solid black; background-color: #595959;">
+                                          <td colspan="7">
+                                              <t t-esc="so_no"/>
+                                          </td>
+                                      </tr>
+                                          <t t-set="fmo_num" t-value="0"/>
+                                          <t t-set="unique_fmo_num" t-value="0"/>
+                                          <t t-set="fmo_no" t-value="0"/>
+                                          <!-- <t t-esc="fmo_num"/> -->
+                                          <t t-set="exist_fmo_num" t-value="0"/>
+                                          <t t-foreach="request.env['mrp.production'].search([('origin','=', so_no), ('state','!=', 'cancel')])" t-as="finish_mo">
+                                              <t t-set="proc_mo_num" t-value="0"/>
+                                              <t t-set="stitch_mo_num" t-value="0"/>
+                                              <t t-set="sum_stitch_mo_qty" t-value="0"/>
+                                              <t t-set="sum_proce_mo_qty" t-value="0"/>
+                                              <t t-set="sum_finish_mo_oqty" t-value="0"/>
+                                              <t t-set="sum_finish_mo_dqty" t-value="0"/>
+                                              <t t-if="not'-' in finish_mo.name">
+                                                  <t t-set="fmo_num" t-value="finish_mo.name"/>
+                                              </t>
+                                              <t t-if="'-' in finish_mo.name">
+                                                  <t t-set="fmo_num" t-value="finish_mo.name.split('-')"/>
+                                                  <t t-set="fmo_num" t-value="fmo_num[0]"/>
+                                              </t>
+                                              <t t-set="tot_finish_mo_num" t-value="0"/>
+                                              <t t-set="tot_finish_mo_dqty" t-value="0"/>
+                                              <t t-foreach="request.env['mrp.production'].search([('origin','=', so_no), ('state','!=', 'cancel')])" t-as="bfinish_mo">
+                                                  <t t-if="not'-' in bfinish_mo.name">
+                                                      <t t-set="extra_fmo_num" t-value="bfinish_mo.name"/>
+                                                  </t>
+                                                  <t t-if="'-' in bfinish_mo.name">
+                                                      <t t-set="extra_fmo_num" t-value="bfinish_mo.name.split('-')"/>
+                                                      <t t-set="extra_fmo_num" t-value="extra_fmo_num[0]"/>
+                                                  </t>
+                                                  <t t-if="extra_fmo_num == fmo_num">
+                                                      <t t-set="tot_finish_mo_num" t-value="tot_finish_mo_num + bfinish_mo.product_qty"/>
+                                                      <t t-set="tot_finish_mo_dqty" t-value="tot_finish_mo_dqty + bfinish_mo.qty_producing"/>
+                                                  </t>
+                                              </t>
+                                              <t t-foreach="request.env['mrp.production'].search([('origin','=', fmo_num), ('x_studio_category','=', 'Processed'), ('state','!=', 'cancel')])" t-as="process_mo">
+                                                  <t t-set="proc_mo_num" t-value="process_mo.name"/>
+<!--                                               <t t-set="sum_proce_mo_qty" t-value="sum_proce_mo_qty + process_mo.qty_producing"/> -->
+                                              </t>
+                                              <t t-foreach="request.env['mrp.production'].search([('origin','=', proc_mo_num), ('x_studio_category','=', 'Stitched'), ('state','!=', 'cancel')])" t-as="stitch_mo">
+                                                  <t t-set="stitch_mo_num" t-value="0"/>
+                                              </t>
+                                              <t t-if="exist_fmo_num != fmo_num">
+                                                  <tr>
+                                                      <td style="width:12%;">
+                                                              <t t-esc="fmo_num"/>
+
+        <!--                                                   <t t-if="fmo_num" t-esc="fmo_num"/> -->
+                                                      </td>
+                                                      <td style="width:15%;">
+                                                          <t t-esc="so_ow.partner_id.name"/>
+                                                      </td>
+                                                      <td style="width:25%;">
+                                                          <t t-esc="finish_mo.product_id.name"/> (<t t-esc="finish_mo.product_id.product_template_attribute_value_ids.name"/>)
+                                                      </td>
+                                                      <td style="width:10%;">
+                                                          <t t-esc="tot_finish_mo_num"/>
+                                                          <t t-set="tot_finish_mo_oqty" t-value="tot_finish_mo_oqty + tot_finish_mo_num"/>
+                                                      </td>
+                                                      <td style="width:10%;">
+                                                          <t t-foreach="request.env['mrp.production'].search([('origin','=', proc_mo_num), ('x_studio_category','=', 'Stitched'), ('state','!=', 'cancel')])" t-as="stitch_mo">
+                                                         <t t-set="stitch_mo_num" t-value="stitch_mo.name"/>
+                                                         <t t-set="sum_stitch_mo_qty" t-value="sum_stitch_mo_qty + stitch_mo.qty_producing"/>
+    <!--                                                      <t t-esc="stitch_mo.qty_producing"/> -->
+                                                         <t t-set="tot_stitch_mo_qty" t-value="tot_stitch_mo_qty + stitch_mo.qty_producing"/>
+                                                          </t>
+                                                          <t t-esc="sum_stitch_mo_qty"/>
+                                                      </td>
+                                                      <td style="width:10%;">
+                                                          <t t-foreach="request.env['mrp.production'].search([('origin','=', fmo_num), ('x_studio_category','=', 'Processed'), ('state','!=', 'cancel')])" t-as="process_mo">
+                                                          <t t-set="proc_mo_num" t-value="process_mo.name"/>
+                                                          <t t-set="sum_proce_mo_qty" t-value="sum_proce_mo_qty + process_mo.qty_producing"/>
+<!--                                                       <t t-esc="process_mo.qty_producing"/> -->
+
+                                                          <t t-set="tot_proce_mo_qty" t-value="tot_proce_mo_qty + process_mo.qty_producing"/>
+                                                          </t>
+                                                          <t t-esc="sum_proce_mo_qty"/>
+                                                      </td>
+                                                      <td style="width:10%;">
+        <!--                                                   <t t-esc="finish_mo.qty_producing"/> -->
+                                                          <t t-esc="tot_finish_mo_dqty"/>
+                                                          <t t-set="tot_finish_mo_dqty" t-value="tot_finish_mo_dqty + finish_mo.qty_producing"/>
+                                                      </td>
+                                                  </tr>
+                                                  <t t-set="exist_fmo_num" t-value="fmo_num"/>
+                                              </t>
+                                          </t>
+                                          <t t-if="so_no==so_ow.name">
+                                              <tr style="border:1px solid black;">
+                                                 <td colspan="3" style="padding-left:5px; color:blue;">Total</td>
+                                                 <td>
+                                                     <t t-esc="'{0:,.2f}'.format(tot_finish_mo_oqty)"/>
+                                                     <t t-set="finish_mo_oqty" t-value="finish_mo_oqty + tot_finish_mo_oqty"/>
+                                                 </td>
+                                                 <td>
+                                                     <t t-esc="'{0:,.2f}'.format(tot_stitch_mo_qty)"/>
+                                                     <t t-set="stitch_mo_qty" t-value="stitch_mo_qty + tot_stitch_mo_qty"/>
+                                                 </td>
+                                                 <td>
+                                                     <t t-esc="'{0:,.2f}'.format(tot_proce_mo_qty)"/>
+                                                     <t t-set="proce_mo_qty" t-value="proce_mo_qty + tot_proce_mo_qty"/>
+                                                 </td>
+                                                 <td>
+                                                     <t t-esc="'{0:,.2f}'.format(tot_finish_mo_dqty)"/>
+                                                     <t t-set="finish_mo_dqty" t-value="finish_mo_dqty + tot_finish_mo_dqty"/>
+                                                 </td>
+                                              </tr>
+                                          </t>
+                                      </t>
+                                      <tr style="border:1px solid black;">
+                                          <td colspan="3"><strong>Total</strong></td>
+                                          <td><t t-esc="'{0:,.2f}'.format(finish_mo_oqty)"/></td>
+                                          <td><t t-esc="'{0:,.2f}'.format(stitch_mo_qty)"/></td>
+                                          <td><t t-esc="'{0:,.2f}'.format(proce_mo_qty)"/></td>
+                                          <td><t t-esc="'{0:,.2f}'.format(finish_mo_dqty)"/></td>
+                                      </tr>
+                                  </tbody>
+                              </table>
+                          </div>
+                      </t>
+
+                      <t t-if="owner_sale_ids and not from_sale_ids">
+                          <div class="row">
+                              <table style="width: 100%; border: 1px solid black;">
+                                  <thead>
+                                      <tr style="border:1px solid black;">
+                                          <th style="width: 15%; border:1px solid black; padding:4px;">MO#</th>
+                                          <th style="width: 15%; border:1px solid black; padding:4px;">Customer</th>
+                                          <th style="width: 25%; border:1px solid black; padding:4px;">Product</th>
+                                          <th style="width: 10%; border:1px solid black; padding:4px;">Order Qty</th>
+                                          <th style="width: 10%; border:1px solid black; padding:4px;">S.Qty</th>
+                                          <th style="width: 10%; border:1px solid black; padding:4px;">P.Qty</th>
+                                          <th style="width: 10%; border:1px solid black; padding:4px;">F.Qty</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody>
+                                      <t t-set="stitch_mo_qty" t-value="0"/>
+                                      <t t-set="proce_mo_qty" t-value="0"/>
+                                      <t t-set="finish_mo_oqty" t-value="0"/>
+                                      <t t-set="finish_mo_dqty" t-value="0"/>
+                                      <t t-set="partner_name" t-value="0"/>
+                                      <t t-foreach="owner_sale_ids.sorted(key=lambda a: (a.partner_id.name, a.name))" t-as="ow_so">
+                                          <t t-set="so_no" t-value="0"/>
+                                          <t t-set="unique_so_no" t-value="0"/>
+                                          <t t-set="stitch_mo_num" t-value="0"/>
+                                          <t t-set="proc_mo_num" t-value="0"/>
+    <!--                                       <t t-set="sum_stitch_mo_qty" t-value="0"/> -->
+    <!--                                       <t t-set="sum_proce_mo_qty" t-value="0"/> -->
+    <!--                                       <t t-set="sum_finish_mo_oqty" t-value="0"/> -->
+    <!--                                       <t t-set="sum_finish_mo_dqty" t-value="0"/> -->
+                                          <t t-set="tot_finish_mo_oqty" t-value="0"/>
+                                          <t t-set="tot_stitch_mo_qty" t-value="0"/>
+                                          <t t-set="tot_proce_mo_qty" t-value="0"/>
+                                          <t t-set="tot_finish_mo_dqty" t-value="0"/>
+                                      <t t-foreach="owner_sale_ids.sorted(key=lambda b: (b.partner_id.name, b.name))" t-as="own_so">
+                                          <t t-if="own_so.partner_id.name == ow_so.partner_id.name and own_so.name == ow_so.name">
+                                              <t t-set="so_no" t-value="own_so.name"/>
+                                              <t t-set="partner_name" t-value="own_so.partner_id.id"/>
+                                          </t>
+                                      </t>
+                                      <tr style="width: 100%; text-align:center; border: 1px solid black; background-color: #595959;">
+                                          <td colspan="7">
+                                              <t t-esc="so_no"/>
+                                          </td>
+                                      </tr>
+                                      <t t-set="fmo_num" t-value="0"/>
+                                      <t t-set="unique_fmo_num" t-value="0"/>
+                                      <t t-set="fmo_no" t-value="0"/>
+                                      <!--                                       <t t-esc="fmo_num"/> -->
+                                     <t t-set="exist_fmo_num" t-value="0"/>
+
+                                     <t t-foreach="request.env['mrp.production'].search([('origin','=', so_no), ('state','!=', 'cancel')])" t-as="finish_mo">
+                                          <t t-set="proc_mo_num" t-value="0"/>
+                                          <t t-set="stitch_mo_num" t-value="0"/>
+                                          <t t-set="sum_stitch_mo_qty" t-value="0"/>
+                                          <t t-set="sum_proce_mo_qty" t-value="0"/>
+                                          <t t-set="sum_finish_mo_oqty" t-value="0"/>
+                                          <t t-set="sum_finish_mo_dqty" t-value="0"/>
+
+
+
+                                         <t t-if="not'-' in finish_mo.name">
+                                           <t t-set="fmo_num" t-value="finish_mo.name"/>
+                                         </t>
+                                         <t t-if="'-' in finish_mo.name">
+                                             <t t-set="fmo_num" t-value="finish_mo.name.split('-')"/>
+                                             <t t-set="fmo_num" t-value="fmo_num[0]"/>
+                                         </t>
+                                          <t t-set="tot_finish_mo_num" t-value="0"/>
+                                          <t t-set="tot_finish_mo_dqty" t-value="0"/>
+                                          <t t-foreach="request.env['mrp.production'].search([('origin','=', so_no), ('state','!=', 'cancel')])" t-as="bfinish_mo">
+                                          <t t-if="not'-' in bfinish_mo.name">
+                                           <t t-set="extra_fmo_num" t-value="bfinish_mo.name"/>
+                                         </t>
+                                            <t t-if="'-' in bfinish_mo.name">
+                                             <t t-set="extra_fmo_num" t-value="bfinish_mo.name.split('-')"/>
+                                             <t t-set="extra_fmo_num" t-value="extra_fmo_num[0]"/>
+                                            </t>
+                                              <t t-if="extra_fmo_num == fmo_num">
+                                                  <t t-set="tot_finish_mo_num" t-value="tot_finish_mo_num + bfinish_mo.product_qty"/>
+                                                  <t t-set="tot_finish_mo_dqty" t-value="tot_finish_mo_dqty + bfinish_mo.qty_producing"/>
+                                              </t>
+                                          </t>
+                                         <t t-foreach="request.env['mrp.production'].search([('origin','=', fmo_num), ('x_studio_category','=', 'Processed'), ('state','!=', 'cancel')])" t-as="process_mo">
+                                              <t t-set="proc_mo_num" t-value="process_mo.name"/>
+<!--                                               <t t-set="sum_proce_mo_qty" t-value="sum_proce_mo_qty + process_mo.qty_producing"/> -->
+                                          </t>
+                                          <t t-foreach="request.env['mrp.production'].search([('origin','=', proc_mo_num), ('x_studio_category','=', 'Stitched'), ('state','!=', 'cancel')])" t-as="stitch_mo">
+                                              <t t-set="stitch_mo_num" t-value="0"/>
+                                          </t>
+                                         <t t-if="exist_fmo_num != fmo_num">
+
+                                          <tr>
+                                              <td style="width:12%;">
+                                                      <t t-esc="fmo_num"/>
+
+<!--                                                   <t t-if="fmo_num" t-esc="fmo_num"/> -->
+                                              </td>
+                                              <td style="width:15%;">
+                                                  <t t-esc="ow_so.partner_id.name"/>
+                                              </td>
+                                              <td style="width:25%;">
+                                                  <t t-esc="finish_mo.product_id.name"/> (<t t-esc="finish_mo.product_id.product_template_attribute_value_ids.name"/>)
+                                              </td>
+                                              <td style="width:10%;">
+                                                  <t t-esc="tot_finish_mo_num"/>
+                                                  <t t-set="tot_finish_mo_oqty" t-value="tot_finish_mo_oqty + tot_finish_mo_num"/>
+                                              </td>
+                                              <td style="width:10%;">
+                                                 <t t-foreach="request.env['mrp.production'].search([('origin','=', proc_mo_num), ('x_studio_category','=', 'Stitched'), ('state','!=', 'cancel')])" t-as="stitch_mo">
+                                                     <t t-set="stitch_mo_num" t-value="stitch_mo.name"/>
+                                                     <t t-set="sum_stitch_mo_qty" t-value="sum_stitch_mo_qty + stitch_mo.qty_producing"/>
+<!--                                                      <t t-esc="stitch_mo.qty_producing"/> -->
+                                                     <t t-set="tot_stitch_mo_qty" t-value="tot_stitch_mo_qty + stitch_mo.qty_producing"/>
+                                                  </t>
+                                                  <t t-esc="sum_stitch_mo_qty"/>
+                                              </td>
+                                              <td style="width:10%;">
+                                                  <t t-foreach="request.env['mrp.production'].search([('origin','=', fmo_num), ('x_studio_category','=', 'Processed'), ('state','!=', 'cancel')])" t-as="process_mo">
+                                                      <t t-set="proc_mo_num" t-value="process_mo.name"/>
+                                                      <t t-set="sum_proce_mo_qty" t-value="sum_proce_mo_qty + process_mo.qty_producing"/>
+<!--                                                       <t t-esc="process_mo.qty_producing"/> -->
+
+                                                      <t t-set="tot_proce_mo_qty" t-value="tot_proce_mo_qty + process_mo.qty_producing"/>
+                                                  </t>
+
+                                                  <t t-esc="sum_proce_mo_qty"/>
+                                              </td>
+                                              <td style="width:10%;">
+<!--                                                   <t t-esc="finish_mo.qty_producing"/> -->
+                                                  <t t-esc="tot_finish_mo_dqty"/>
+                                                  <t t-set="tot_finish_mo_dqty" t-value="tot_finish_mo_dqty + finish_mo.qty_producing"/>
+                                              </td>
+                                          </tr>
+                                          <t t-set="exist_fmo_num" t-value="fmo_num"/>
+                                         </t>
+                                     </t>
+
+                                     <t t-if="so_no==ow_so.name">
+                                         <tr style="border:1px solid black;">
+                                             <td colspan="3" style="padding-left:5px; color:blue;">Total</td>
+                                             <td>
+                                                 <t t-esc="'{0:,.2f}'.format(tot_finish_mo_oqty)"/>
+                                                 <t t-set="finish_mo_oqty" t-value="finish_mo_oqty + tot_finish_mo_oqty"/>
+                                             </td>
+                                             <td>
+                                                 <t t-esc="'{0:,.2f}'.format(tot_stitch_mo_qty)"/>
+                                                 <t t-set="stitch_mo_qty" t-value="stitch_mo_qty + tot_stitch_mo_qty"/>
+                                             </td>
+                                             <td>
+                                                 <t t-esc="'{0:,.2f}'.format(tot_proce_mo_qty)"/>
+                                                 <t t-set="proce_mo_qty" t-value="proce_mo_qty + tot_proce_mo_qty"/>
+                                             </td>
+                                             <td>
+                                                 <t t-esc="'{0:,.2f}'.format(tot_finish_mo_dqty)"/>
+                                                 <t t-set="finish_mo_dqty" t-value="finish_mo_dqty + tot_finish_mo_dqty"/>
+                                             </td>
+                                         </tr>
+                                      </t>
+                                  </t>
+                                  <tr style="border:1px solid black;">
+                                      <td colspan="3"><strong>Total</strong></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(finish_mo_oqty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(stitch_mo_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(proce_mo_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(finish_mo_dqty)"/></td>
+                                  </tr>
+                                  </tbody>
+                              </table>
+                          </div>
+
+                      </t>
+                  </div>
+              </div>
+          </t>
+      </t>
+    </template>
+</odoo>

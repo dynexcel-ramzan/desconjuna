@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+	<template id="gate_pass_report">
+		<t t-call="web.html_container">
+			<t t-call="web.external_layout">
+				<div style="text-align:center;">
+			    	<h2>Fabric Outward Gatepass</h2>
+			  	</div>
+
+				<div class="row" style="margin-top:5px;">
+          			<div class="col-3">
+            			<strong>Reference:</strong>
+            			<p class="m-0" t-field="docs.name"/>
+					</div>
+					<div class="col-3">
+						<strong>Date:</strong>
+						<p class="m-0" t-field="docs.scheduled_date"/>
+					</div>
+					<div class="col-3">
+						<strong>Party:</strong>
+						<p class="m-0" t-field="docs.partner_id.name"/>
+					</div>
+					<div class="col-3">
+						<strong>Delivery Order:</strong>
+						<p class="m-0" t-field="docs.delivery_order.name"/>
+					</div>
+        		</div>
+				<div class="row" style="margin-top:5px;">
+				  <div class="col-3">
+					<strong>Sale Order:</strong>
+					<p class="m-0" t-field="docs.sale_order"/>
+				  </div>
+				  <div class="col-3">
+					<strong>Driver:</strong>
+					<p class="m-0" t-field="docs.driver_name"/>
+				  </div>
+				  <div class="col-3">
+					  <strong>Vehicle No:</strong>
+					  <p class="m-0" t-field="docs.vehicle_no"/>
+				  </div>
+				  <div class="col-3">
+					  <strong>Manual GP#:</strong>
+					  <p class="m-0" t-field="docs.manual_number"/>
+				  </div>
+				</div>
+				<div style="margin-top:8px;">
+				 <table style="width:100%;">
+				   <thead>
+					 <tr style="border:1px solid black;">
+					   <th style="width: 35%; border-right:1px solid black; padding:5px;">Product</th>
+					   <th style="width: 17%; border-right:1px solid black; padding:5px;">Lot Number</th>
+					   <th style="width: 23%; border-right:1px solid black; padding:5px;">Source Package</th>
+					   <!--<th>Owner</th>-->
+					   <!--<th>Quantity Done</th>-->
+					   <th style="width: 15%; border-right:1px solid black; padding:5px;">GP Qty</th>
+					 </tr>
+				   </thead>
+				   <t t-set="sum_gatepass_qty" t-value="0"/>
+				   <tbody>
+					 <t t-foreach="docs" t-as="doc">
+					   <t t-foreach="doc.gate_pass_lines" t-as="o">
+						 <t t-if="o.gatepass_quantity > 0">
+						   <tr style="border:1px solid black;">
+							 <td style="width: 35%; border-right:1px solid black; padding:5px;">
+							   <t t-esc="o.product_id.name"/>
+											 </td>
+											 <td style="width: 17%; border-right:1px solid black; padding:5px;">
+												<t t-esc="o.lot_number.name"/>
+											 </td>
+							 <td style="width: 23%; border-right:1px solid black; padding:5px;">
+												<t t-esc="o.package_id.name"/> / <t t-esc="o.package_id.shipping_grade"/>
+											 </td>
+											 <!--<td>-->
+												<!--<t t-esc="o.owner.name"/>-->
+											 <!--</td>-->
+											 <!--<td>-->
+												<!--<t t-esc="o.quantity_done"/>-->
+											 <!--</td>-->
+											 <td style="width: 15%; border-right:1px solid black; padding:5px;">
+												<t t-esc="o.gatepass_quantity"/>
+												<t t-set="sum_gatepass_qty" t-value="sum_gatepass_qty + o.gatepass_quantity"/>
+											 </td>
+						   </tr>
+						 </t>
+					   </t>
+					 </t>
+					 <tr style="border:1px solid black;">
+								  <td colspan="3" style="border-right:1px solid black; padding: 5px;"><strong>Total Gatepass Quantity:</strong></td>
+								  <td style="padding: 5px;">	<t t-esc="sum_gatepass_qty"/></td>
+								</tr>
+				   </tbody>
+				 </table>
+				</div>
+				<div class="row">
+				   <div style="margin-top:20%;">
+					  <div style="float:left; margin-left: 20px;">
+						<span t-field="docs.create_uid.name" style="text-decoration: underline;"/>
+				  <br/>
+				  <div class="text-center"><strong>Prepared By:</strong></div>
+					  </div>
+					  <div style="float:left; margin-left: 20px;">
+						  _________________
+						  <br/>
+						  <div class="text-center"><strong>Checked By:</strong></div>
+					 </div>
+			    	<div style="float:left; margin-left: 20px;">
+			  ___________________
+			  <br/>
+			  <div class="text-center"> <strong>Approved By:</strong></div>
+					 </div>
+					 <div style="float:left; margin-left: 20px;">
+			  ___________________
+			  <br/>
+			  <div class="text-center"><strong>Security Incharge:</strong></div>
+					 </div>
+				  </div>
+			   </div>
+			</t>
+		</t>
+	</template>
+
+</odoo>
+

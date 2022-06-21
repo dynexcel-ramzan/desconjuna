@@ -1,0 +1,32 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+      <!--Sale person Form View-->
+        <record id="account_move_form_view_inherit" model="ir.ui.view">
+            <field name="name">account.move.tree.view.inherit</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+                <field name="team_id" position="after">
+                    <field name="sale_person"/>
+                </field>
+            </field>
+        </record>
+        <!--End Form View-->
+        <record id="account_move_tree_view_inherit" model="ir.ui.view">
+            <field name="name">account.move.tree.view.inherit</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_out_invoice_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='invoice_partner_display_name']" position="attributes">
+                  <attribute name="invisible">1</attribute>
+                </xpath>
+                <field name="name" position="after">
+                  <field name="sale_person"/>
+                </field>
+            </field>
+        </record>
+        <!--End Account invoice tree view-->
+
+  </data>
+</odoo>

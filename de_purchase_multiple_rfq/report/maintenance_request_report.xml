@@ -1,0 +1,17 @@
+<odoo>
+<!--  <data>-->
+    <record id="maintenance_request_report" model="ir.actions.report">
+        <field name="name">Maintenance Request</field>
+        <field name="model">maintenance.request</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">de_purchase_multiple_rfq.report_maintenance_request_template</field>
+    </record>
+<!--     <report-->
+<!--            id="maintenance_request_report"-->
+<!--            string="Maintenance Request"-->
+<!--            model="maintenance.request"-->
+<!--            report_type="qweb-pdf"-->
+<!--            file="de_purchase_multiple_rfq.report_maintenance_request_template"-->
+<!--            name="de_purchase_multiple_rfq.report_maintenance_request_template" /> -->
+<!--  </data>-->
+</odoo>

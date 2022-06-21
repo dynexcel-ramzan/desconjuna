@@ -1,0 +1,13 @@
+<odoo>
+  <data>
+        <report
+            id="invoice_customer_report_action"
+            string="Customer Invoice Information (Tags)"
+            model="report.de_invoice_tag_wise_report.invoice_customer_report_pdf"
+            report_type="qweb-pdf"
+            file="de_invoice_tag_wise_report.invoice_customer_report_pdf"
+            name="de_invoice_tag_wise_report.invoice_customer_report_pdf"
+        />
+
+  </data>
+</odoo>

@@ -1,0 +1,52 @@
+<odoo>
+    <data>
+        <!--Show production date on form view-->
+        <record id="inherit_view_mrp_production_form" model="ir.ui.view">
+            <field name="name">inherit.view.mrp.production.form</field>
+            <field name="model">mrp.production</field>
+            <field name="inherit_id" ref="mrp.mrp_production_form_view"/>
+            <field name="arch" type="xml">
+                <field name="user_id" position="before">
+                	<field name="production_date"/>
+            	</field>
+            </field>
+        </record>
+        <!--End form view-->
+        <!--Sow production date on list view-->
+        <!--<record id="inherit_view_mrp_production_tree" model="ir.ui.view">-->
+            <!--<field name="name">inherit.view.mrp.production.tree</field>-->
+            <!--<field name="model">mrp.production</field>-->
+            <!--<field name="inherit_id" ref="mrp.mrp_production_tree_view"/>-->
+            <!--<field name="arch" type="xml">-->
+                <!--<field name="date_planned_start" position="before">-->
+                	<!--<field name="production_date"/>-->
+            	<!--</field>-->
+            <!--</field>-->
+        <!--</record>-->
+        <!--End List View-->
+        <!--production date on Stock Move line form view-->
+        <record id="inherit_view_stock_move_line_form" model="ir.ui.view">
+            <field name="name">inherit.view.stock.move.line.form</field>
+            <field name="model">stock.move.line</field>
+            <field name="inherit_id" ref="stock.view_move_line_form"/>
+            <field name="arch" type="xml">
+                <field name="date" position="after">
+                	<field name="production_date"/>
+            	</field>
+            </field>
+        </record>
+        <!--End form view-->
+        <!--production date on Stock Move line form view-->
+        <record id="inherit_view_stock_move_line_tree" model="ir.ui.view">
+            <field name="name">inherit.view.stock.move.line.tree</field>
+            <field name="model">stock.move.line</field>
+            <field name="inherit_id" ref="stock.view_move_line_tree"/>
+            <field name="arch" type="xml">
+                <field name="date" position="after">
+                	<field name="production_date"/>
+            	</field>
+            </field>
+        </record>
+        <!--End list view-->
+    </data>
+</odoo>

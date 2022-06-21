@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="inherit_view_mrp_production_form" model="ir.ui.view">
+        <field name="name">inherit.view.mrp.production.form</field>
+        <field name="model">mrp.production</field>
+        <field name="inherit_id" ref="mrp.mrp_production_form_view"></field>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='button_maintenance_req']" position="after">
+                <button name="action_back_to_draft" states="cancel" string="Back to draft" groups="base.group_user" type="object"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+

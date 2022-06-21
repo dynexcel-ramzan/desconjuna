@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+<!--    Inherit Sale order in form view&ndash;&gt;-->
+        <record id="stock_package_form_view_inherit" model="ir.ui.view">
+            <field name="name">stock.package.form.view.inherit</field>
+            <field name="model">stock.quant.package</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_quant_package_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='packing_date']" position="after">
+                    <field name="sale_order"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Inherit Tree View -->
+        <record id="stock_package_tree_view_inherit" model="ir.ui.view">
+            <field name="name">stock.package.tree.view.inherit</field>
+            <field name="model">stock.quant.package</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_quant_package_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='packing_date']" position="after">
+                    <field name="sale_order"/>
+                </xpath>
+            </field>
+        </record>
+        <!-- Inherit Search View -->
+        <record id="view_stock_package_search_inherit" model="ir.ui.view">
+            <field name="name">view.stock.package.search.inherit</field>
+            <field name="model">stock.quant.package</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.quant_package_search_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='location_id']" position="after">
+                    <field name="sale_order"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

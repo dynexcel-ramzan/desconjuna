@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_invoice_document_inherit" name="report_invoice_print" inherit_id="account.report_invoice_document">
+        <xpath expr="//table//thead//tr//th[2]" position="after">
+            <th name="th_account" class="text-left"><span>Analytic Account</span></th>
+            <th name="th_account" class="text-left"><span>Accounting Tags</span></th>
+        </xpath>
+        
+        <xpath expr="//tbody//t//tr//td[2]" position="after">
+        	<td name="invoice_line_analytic_account">
+        		<span t-field="line.analytic_account_id.name" />
+        	</td>
+        	
+        	<td name="invoice_line_analytic_account_tag">
+	        	<t t-foreach="line.analytic_tag_ids" t-as="at">
+	           		<t t-esc="at.name"/>
+	           			<br />
+	           	</t>
+        	</td>
+        	
+        </xpath>
+        
+        
+        
+        <xpath expr="//t//div[@id='qrcode']" position="after">
+            
+        
+        <div class="row">
+			<div style="margin-top:10%;">
+				<div style="float:left; margin-left: 15px;">
+				<span t-field="o.create_uid.name" style="text-decoration: underline;"/>
+                  			
+                  			<br/>
+                   	<div class="text-center"  style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Prepared By:</strong></div>
+				</div>
+				<div style="float:left; margin-left: 15px;">
+                  			_______________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;" ><strong>Checked By:</strong></div>
+				</div>
+				<div style="float:left; margin-left: 15px;">
+                  			________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Finance Manager:</strong></div>
+				</div>
+				<div style="float:left; margin-left: 15px;">
+                  			_________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Managing Director:</strong></div>
+				</div>
+				<div style="float:left; margin-left: 15px;">
+                  			_______________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Received By:</strong></div>
+				</div>
+			</div>
+		</div>
+		
+
+        
+        </xpath>
+        
+        
+        
+        
+        
+        
+        
+        
+    </template>
+
+</odoo>

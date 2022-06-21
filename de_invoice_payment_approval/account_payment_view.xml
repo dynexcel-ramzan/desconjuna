@@ -1,0 +1,37 @@
+<!--<?xml version="1.0" encoding="UTF-8"?>-->
+<odoo>
+<!--    <data>-->
+        <record id="inherit_view_account_payment_form" model="ir.ui.view">
+                <field name="name">inherit.view.account.payment.form</field>
+                <field name="model">account.payment</field>
+                <field name="inherit_id" ref="account.view_account_payment_form"/>
+                <field name="arch" type="xml">
+                    <xpath expr="//header" position="inside">
+                        <button name="action_approval" groups="de_invoice_payment_approval.group_approval_user"  class="oe_highlight"
+                                attrs="{'invisible':[('state','!=','draft')]}" string="Submit For Approval" type="object"/>
+                        <button name="action_approved" groups="de_invoice_payment_approval.group_approved_user" class="oe_highlight"
+                             states="approval" string="Approved" type="object"/>
+<!--                        <button name="action_cancel" string="Cancel" groups="de_invoice_payment_approval.group_cancel_user" type="object" attrs="{'invisible': [('state', 'not in', ('draft', 'posted'))]}"/>-->
+                    </xpath>
+                    <xpath expr="//button[@name='action_post']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('state', 'not in', ('approved'))]}</attribute>
+                        <attribute name="groups">de_invoice_payment_approval.group_confirm_payment_user</attribute>
+                    </xpath>
+                    <xpath expr="//button[@name='action_draft']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('state', 'not in', ('cancel'))]}</attribute>
+                        <attribute name="groups">de_invoice_payment_approval.group_reset_to_draft_user</attribute>
+                    </xpath>
+                    <xpath expr="//button[@name='action_cancel']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('state', 'not in', ('draft', 'posted', 'approval'))]}</attribute>
+                        <attribute name="groups">de_invoice_payment_approval.group_cancel_user</attribute>
+                    </xpath>
+                    <xpath expr="//field[@name='move_id']" position="after">
+                        <field name="id" />
+                    </xpath>
+                    <xpath expr="//field[@name='move_id']" position="after">
+                        <field name="available_partner_bank_ids" invisible="1"/>
+                    </xpath>
+                </field>
+        </record>
+<!--    </data>-->
+</odoo>

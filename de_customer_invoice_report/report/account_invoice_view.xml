@@ -1,0 +1,13 @@
+<odoo>
+  <data>
+        <report
+            id="customer_invoice_report_action"
+            string="Customer Invoice Information"
+            model="report.de_customer_invoice_report.invoice_report_customer"
+            report_type="qweb-pdf"
+            file="de_customer_invoice_report.invoice_report_customer"
+            name="de_customer_invoice_report.invoice_report_customer"
+        />
+
+  </data>
+</odoo>

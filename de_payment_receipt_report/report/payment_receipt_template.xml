@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_payment_receipt_template">
+        <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="row">
+                      <div class="col-3">
+                            <strong>Print Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%m/%d/%Y')"/></strong>
+                        </div>
+                      <div class="col-7" style="text-align:center; font-size:22px; margin-top: -7px;">
+                        <strong t-if="doc.payment_type == 'inbound'">Payment Receipt Voucher</strong>
+                        <strong t-if="doc.payment_type == 'outbound'">Bank Payment Voucher</strong>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-3"></div>
+                      <div class="col-3"></div>
+                      <div class="col-3"></div>
+                      <div class="col-3">
+                        <strong>Date: </strong> <span t-field="doc.date"/>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-4">
+                        <strong>Customer: </strong> <span t-field="doc.partner_id"/>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-4">
+                        <strong>Payment Journal: </strong> <span t-field="doc.journal_id"/>
+                      </div>
+                      <div class="col-5"></div>
+                      <div class="col-3" style="margin-top:-10px;">
+                        <strong>Amount: </strong> <span t-field="doc.amount"/>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-6">
+                        <t t-set="payment_number" t-value="0"/>
+                        <t t-set="payment_number" t-value="doc.name.split('/')"/>
+                        <strong t-if="doc.payment_type == 'inbound' and doc.state == 'posted'">Payment Receipt: </strong> <span t-if="doc.payment_type == 'inbound'and doc.state == 'posted'">BRV/</span><t t-if="doc.payment_type == 'inbound' and doc.state == 'posted'" t-esc="doc.name"/>
+                        <strong t-if="doc.payment_type == 'outbound' and doc.state == 'posted'">Payment Receipt: </strong> <span t-if="doc.payment_type == 'outbound' and doc.state == 'posted'">BRV/</span><t t-if="doc.payment_type == 'outbound' and doc.state == 'posted'" t-esc="doc.name"/>
+                        <strong t-if="doc.payment_type == 'inbound' and doc.state == 'draft'">Payment Receipt: </strong> <span t-if="doc.payment_type == 'inbound' and doc.state == 'draft'">Draft</span><t t-if="doc.payment_type == 'inbound' and doc.state == 'draft'" t-esc="doc.id"/>
+                        <strong t-if="doc.payment_type == 'outbound' and doc.state == 'draft'">Payment Receipt: </strong> <span t-if="doc.payment_type == 'outbound' and doc.state == 'draft'">Draft</span><t t-if="doc.payment_type == 'outbound'  and doc.state == 'draft'" t-esc="doc.id"/>
+                      </div>
+                    </div>
+                    <div class="row" style="position:absolute; margin-top:320px;">
+                      <div style="margin-top:10px;">
+                        <div style="float:left; margin-left:10px;">
+                          <span t-field="doc.create_uid.name" style="text-decoration: underline;"/>
+                          <br/>
+                          <div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Prepared By:</strong></div>
+
+                        </div>
+                        <div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Checked By:</strong></div>
+                   	</div>
+                   	<div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Approved By:</strong></div>
+                   	</div>
+                   	<div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Received By:</strong></div>
+                   	</div>
+
+                      </div>
+                    </div>
+                </div>
+            </t>
+        </t>
+        </t>
+    </template>
+</odoo>

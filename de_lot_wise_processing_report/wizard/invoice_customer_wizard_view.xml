@@ -1,0 +1,43 @@
+<odoo>
+  <data>
+           <!--Display form view of wizard-->
+        <record id="view_greige_process_report_wizard" model="ir.ui.view">
+            <field name="name">view.greige.process.report.wizard</field>
+            <field name="model">greige.process.report.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="from_lot_id"/>
+                            <field name="owner_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <field name="to_lot_id"/>
+<!--                            <field name="date_to"/>-->
+                        </group>
+                    </group>
+
+                    <footer>
+                        <button name="check_report"
+                            string="Greige Stock Status"
+                            type="object"
+                            class="oe_highlight"/>
+                        <button string="Cancel" class="btn-default" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!--Open the wizard on click of menu-->
+        <record id="greige_process_wizard_action" model="ir.actions.act_window">
+            <field name="name">Greige Process Information</field>
+            <field name="res_model">greige.process.report.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="view_id" ref="view_greige_process_report_wizard"/>
+        </record>
+      <menuitem action="greige_process_wizard_action" id="greige_process_report_menu" name="Lot Wise Processing Report" parent="stock.menu_warehouse_report" sequence="121"/>
+
+
+  </data>
+</odoo>

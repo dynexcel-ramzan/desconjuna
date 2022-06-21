@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_account_statement_template">
+        <t t-call="web.html_container">
+        <t t-foreach="docs" t-as="doc">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="row">
+                      <div class="col-5">
+                            <strong>Print Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%b/%Y %H:%M:%S %p')"/></strong>
+                        </div>
+<!--                      <div class="col-7" style="text-align:center; font-size:22px; margin-top: -7px;">-->
+<!--                        <strong t-if="doc.payment_type == 'inbound'">Payment Receipt Voucher</strong>-->
+<!--                        <strong t-if="doc.payment_type == 'outbound'">Bank Payment Voucher</strong>-->
+<!--                      </div>-->
+                    </div>
+                    <div class="row">
+                      <div class="col-4"/>
+                      <div class="col-4"/>
+                      <div class="col-4 text-right" style="font-size: 22px;">
+                        <strong>
+                          <span t-if="doc.journal_id.type == 'bank'">Bank Statement</span>
+                          <span t-else="">Cash Statement</span>
+                        </strong>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-12">
+                        <h5>
+                          <strong>
+                            <span t-field="doc.journal_id"/>
+                            <t t-if="doc.journal_id.bank_account_id"> -
+                              <span t-field="doc.journal_id.bank_account_id"/>
+                            </t>
+                            <t t-if="doc.journal_id.code"> -
+                              <span t-field="doc.journal_id.code"/>
+                            </t>
+                          </strong>
+                        </h5>
+                      </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px;">
+                      <div class="col-12">
+                        <h5>
+                        <strong>
+                          <t t-if="doc.name">
+                            <span t-field="doc.name"/> -
+                          </t>
+                          <span t-field="doc.date"/>
+                        </strong>
+                      </h5>
+                      </div>
+                    </div>
+                    <table style="width: 100%; margin-top: 15px;">
+                      <!--<tbody>-->
+                        <tr>
+                          <td style="width: 30%;"><strong style="font-size: 18px;">Starting Balance</strong></td>
+                          <td style="width: 30%; text-align:center;">
+                            <strong style="font-size: 18px;">
+                              <span t-esc="doc.line_ids and doc.line_ids.sorted(lambda line: line.date)[0].date" t-options="{&quot;widget&quot;: &quot;date&quot;}"/>
+                            </strong>
+                          </td>
+                          <td class="text-right" style="width: 30%;">
+                            <strong style="font-size: 18px;">
+                              <span t-field="doc.balance_start"/>
+                            </strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="width: 30%;"><strong style="font-size: 18px;">Ending Balance</strong></td>
+                          <td style="width: 30%; text-align:center;">
+                            <strong style="font-size: 18px;">
+                              <span t-esc="doc.line_ids and doc.line_ids.sorted(lambda line: line.date)[0].date" t-options="{&quot;widget&quot;: &quot;date&quot;}"/>
+                            </strong>
+                          </td>
+                          <td class="text-right" style="width: 30%;">
+                            <strong style="font-size: 18px;">
+                              <span t-field="doc.balance_end_real"/>
+                            </strong>
+                          </td>
+                        </tr>
+                      <!--</tbody>-->
+                    </table>
+                    <table style="width: 100%; margin-top: 20px;">
+                      <tbody>
+                          <tr t-foreach="doc.line_ids" t-as="line">
+                            <td style="width: 5%; padding-bottom: 15px;">
+                                <span t-field="line.date"/>
+                            </td>
+                            <td style="width: 10%; padding-bottom: 15px;"><span t-if="line.partner_id" t-field="line.partner_id"/></td>
+                            <!--<td style="width: 10%;"><span t-if="line.partner_bank_id" t-field="line.partner_bank_id"/></td> -->
+                            <td style="width: 25%; padding-bottom: 15px;"><span t-if="line.payment_ref" t-field="line.payment_ref"/></td>
+                            <td style="width: 10%; padding-bottom: 15px;">
+                                <t t-foreach="request.env['account.move.line'].search([('statement_line_id','=', line.id)])" t-as="st_line_id">
+                                    <t t-if="st_line_id.analytic_account_id">
+                                       <span t-field="st_line_id.analytic_account_id.name"/>
+                                    </t>
+                                </t>
+                            </td>
+
+                            <!--<td style="width: 10%;"><span t-if="line.narration" t-field="line.narration"/></td>   -->
+                            <td class="text-right" style="width: 8%; padding-bottom: 15px;">
+                                <strong><span t-field="line.amount"/></strong>
+                            </td>
+                          </tr>
+                      </tbody>
+                  </table>
+                </div>
+            </t>
+        </t>
+        </t>
+    </template>
+</odoo>

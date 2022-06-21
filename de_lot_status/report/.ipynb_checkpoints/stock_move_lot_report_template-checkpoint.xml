@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    
+    <record id="view_lot_status_report_tree" model="ir.ui.view">
+        <field name="name">view.report.stock.move.lot.tree</field>
+        <field name="model">report.stock.move.lot</field>
+        <field name="arch" type="xml">
+            <tree string="Lot Stock Report">
+                <field name="location_id"/>
+                <field name="partner_id"/>
+                <field name="lot_name"/>
+                <field name="product_id"/>
+                <field name="package_id"/>
+                <field name="qty_done"/>
+            </tree>
+        </field>
+    </record>
+    
+    <record id="view_sale_stock_report_pivot" model="ir.ui.view">
+         <field name="name">view.report.stock.move.lot.pivot</field>
+         <field name="model">report.stock.move.lot</field>
+         <field name="arch" type="xml">
+             <pivot string="Lot Stock Report" disable_linking="False">
+                 <field name="partner_id" type="row"/>
+                 <field name="location_id" type="column"/>
+                 <field name="qty_done" type="measure"/>
+             </pivot>
+         </field>
+    </record>
+    
+    
+    <record id="view_report_stock_move_lot_search" model="ir.ui.view">
+        <field name="name">view.report.stock.move.lot.search</field>
+        <field name="model">report.stock.move.lot</field>
+        <field name="arch" type="xml">
+            <search string="Lot Stock Report">
+                <field name="lot_name"/>
+                <separator/>
+                <field name="partner_id"/>
+                <field name="location_id"/>
+                <field name="product_id"/>
+                <field name="package_id"/>
+                <group expand="1" string="Group By">
+                    <filter string="Partner" name="partner_id" context="{'group_by':'partner_id'}"/>
+                    <separator/>
+                    <filter string="Location" name="location_id" context="{'group_by':'location_id'}"/>
+                    <filter string="Product" name="product" context="{'group_by':'product_id'}"/>
+                    <filter string="Lot" name="lot" context="{'group_by':'lot_name'}"/>
+                    <filter string="Package" name="package" context="{'group_by':'package_id'}"/>
+                    <separator/>
+                </group>
+            </search>
+        </field>
+    </record>
+    
+    
+    <record id="action_report_stock_move_lot" model="ir.actions.act_window">
+        <field name="name">Lot Stock</field>
+        <field name="res_model">report.stock.move.lot</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">pivot,graph,tree</field>
+        <field name="view_id"></field>  <!-- force empty -->
+        <field name="search_view_id" ref="view_report_stock_move_lot_search"/>
+        <!--<field name="context">{'search_default_Sales':1, 'group_by_no_leaf':1,'group_by':[]}</field>-->
+        <field name="help">This report performs analysis on stock move.</field>
+    </record>
+    
+    
+    <menuitem id="report_stock_move_lot_menu" name="Lot Stock Report" parent="stock.menu_warehouse_report" action="action_report_stock_move_lot" sequence="40"/>
+    
+</odoo>

@@ -1,0 +1,13 @@
+<odoo>
+  <data>
+        <report
+            id="greige_process_report_action"
+            string="Lot Wise Processing Report"
+            model="report.de_lot_wise_processing_report.greige_process_report_pdf"
+            report_type="qweb-pdf"
+            file="de_lot_wise_processing_report.greige_process_report_pdf"
+            name="de_lot_wise_processing_report.greige_process_report_pdf"
+        />
+
+  </data>
+</odoo>

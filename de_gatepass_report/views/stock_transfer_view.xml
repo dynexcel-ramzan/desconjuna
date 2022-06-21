@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_stock_gatepass_transfer_wizard" model="ir.actions.act_window">
+            <field name="name">Fabric Gatepasss</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">stock.gatepass.transfer.wizard</field>
+            <field name="view_id" ref="view_stock_gatepass_transfer_wizard"/>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_stock_gatepass_transfer_pdf"
+              name="Fabric Gatepass Information"
+              action="action_stock_gatepass_transfer_wizard"
+              parent="stock.menu_warehouse_report"
+              />
+</odoo>

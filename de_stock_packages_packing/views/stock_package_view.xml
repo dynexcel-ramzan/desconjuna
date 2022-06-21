@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="quant_package_form_view_inherit" model="ir.ui.view">
+        <field name="name">quant.package.form.view.inherit</field>
+        <field name="model">stock.quant.package</field>
+        <field name="type">form</field>
+        <field name="inherit_id" ref="stock.view_quant_package_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group" position="inside">
+                <group>
+                    <field name="packing_date"/>
+                </group>
+            </xpath>
+            <xpath expr="//field[@name='location_id']" position="before">
+                <field name="packing_quantity"/>
+                <field name="packing_type"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Tree View -->
+    <record id="quant_package_tree_view_inherit" model="ir.ui.view">
+        <field name="name">quant.package.tree.view.inherit</field>
+        <field name="model">stock.quant.package</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="stock.view_quant_package_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='display_name']" position="after">
+                <field name="packing_date"/>
+            </xpath>
+            <xpath expr="//field[@name='location_id']" position="before">
+                <field name="packing_quantity"/>
+                <field name="packing_type"/>
+            </xpath>
+        </field>
+    </record>
+    <!-- Inherit Search View -->
+    <record id="view_quant_package_search_inherit" model="ir.ui.view">
+        <field name="name">view.quant.package.search.inherit</field>
+        <field name="model">stock.quant.package</field>
+        <field name="type">search</field>
+        <field name="inherit_id" ref="stock.quant_package_search_view"/>
+        <field name="arch" type="xml">
+             <xpath expr="//search/group" position="inside">
+                 <filter string="Bales" domain="[('packing_type','=','bales')]" name="bales"/>
+                 <separator/>
+                 <filter string="Rolls" domain="[('packing_type','=','rolls')]" name="rolls"/>
+                 <separator/>
+                 <filter string="Thaan" domain="[('packing_type','=','thaan')]" name="thaan"/>
+                 <!--<group string="Group By">-->
+                    <!--<filter string="Packing" name="packing" domain="[]" context="{'group_by':'packing_type'}"/>-->
+                <!--</group>-->
+           </xpath>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,1349 @@
+<odoo>
+    <template id="greige_stock_report_pdf">
+      <t t-call="web.html_container">
+          <t t-foreach="docs" t-as="docs">
+              <div class="article o_report_layout_standard" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id">
+                  <div class="page">
+                      <h3 style=" text-align: center">Greige Stock Status</h3>
+                      <br/>
+                      <t t-if="from_stock_ids and not owner_from_stock_ids and not owner_stock_ids">
+                      <div class="row">
+                          <table style="width:100%; border: 1px solid black;">
+                              <thead>
+                                  <tr>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">L.Rec Date:</th>
+                                      <th style="width:15%; border: 1px solid black; padding-left: 5px;">Owner:</th>
+                                      <th style="width:7%; border: 1px solid black; padding-left: 5px;">Lot No:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Rec:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Ret:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Adj:</th>
+                                      <th style="width:30%; border: 1px solid black; padding-left: 5px;">MO#:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">G. Used:</th>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">Balance:</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+
+                                  <t t-set="sum_lot_name" t-value="[]"/>
+                                  <t t-set="sum_same_lot_qty" t-value="0"/>
+                                  <t t-set="tot_gre_rec_qty" t-value="0"/>
+                                  <t t-set="tot_gre_ret_qty" t-value="0"/>
+                                  <t t-set="tot_gre_adj_qty" t-value="0"/>
+                                  <t t-set="total_gre_used_qty" t-value="0"/>
+                                  <t t-set="total_balance_qty" t-value="0"/>
+                                  <t t-foreach="from_stock_ids.sorted(key=lambda a: (a.lot_id.name, a.date))" t-as="from_stock">
+                                      <t t-set="lot_rec_date" t-value="0"/>
+                                      <t t-set="same_lot_qty" t-value="0"/>
+                                      <t t-set="lot_ret_qty" t-value="0"/>
+                                      <t t-set="lot_gre_adj_qty" t-value="0"/>
+                                      <t t-set="gre_adj_qty" t-value="0"/>
+                                      <t t-set="greige_gstock_adj" t-value="0"/>
+                                      <t t-set="gre_out_prep_adj_qty" t-value="0"/>
+                                      <t t-set="gre_out_prep_vladj_qty" t-value="0"/>
+                                      <t t-set="gre_out_whstck_qty" t-value="0"/>
+                                      <t t-set="gre_to_gstock_adj" t-value="0"/>
+                                      <t t-set="gre_to_whtock_adj" t-value="0"/>
+                                      <t t-set="gre_whstock_adj" t-value="0"/>
+                                      <t t-set="gre_to_pre_prd_adj" t-value="0"/>
+                                      <t t-set="gre_adj_qty" t-value="0"/>
+                                      <t t-set="to_stock_lot_adj_qty" t-value="0"/>
+                                      <t t-set="gre_in_stock" t-value="0"/>
+                                      <t t-set="from_stock_lot_adj_qty" t-value="0"/>
+                                      <t t-set="owner_name" t-value="0"/>
+                                      <t t-set="mo_ref" t-value="0"/>
+                                      <t t-set="mo_num_qty" t-value="0"/>
+                                      <t t-set="gre_use_qty" t-value="0"/>
+                                      <t t-set="balance_qty" t-value="0"/>
+<!--                                       Same lot Quantity and last receiving date section -->
+                                      <t t-foreach="from_stock_ids.sorted(key=lambda b: b.lot_id.name)" t-as="from_stock_lot">
+                                          <t t-if="from_stock_lot.lot_id.name == from_stock.lot_id.name">
+                                              <t t-set="same_lot_qty" t-value="same_lot_qty+from_stock_lot.qty_done"/>
+                                              <t t-set="lot_rec_date" t-value="from_stock_lot.date "/>
+                                              <t t-set="owner_name" t-value="from_stock_lot.owner_id.name"/>
+                                          </t>
+
+                                      </t>
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 9), ('state','=', 'done')])" t-as="gre_ret_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="lot_ret_qty" t-value="lot_ret_qty + gre_ret_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 5), ('location_dest_id','=', 20), ('state','=', 'done')])" t-as="gre_adj_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="to_stock_lot_adj_qty" t-value="to_stock_lot_adj_qty + gre_adj_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+<!--                  Greige Out From Gstock to Virtual Locations/Inventory adjustment Start -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 5), ('state','=', 'done')])" t-as="gre_adj_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="from_stock_lot_adj_qty" t-value="-(from_stock_lot_adj_qty + gre_adj_num.qty_done)"/>
+<!--                                           </t> -->
+                                      </t>
+
+<!--                    Greige Out From Gstock to Virtual Locations/Inventory adjustment End -->
+
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_out_num">
+                                          <t t-set="gre_use_qty" t-value="-(gre_use_qty + gre_out_num.qty_done)"/>
+                                      </t>
+
+<!--                     Grige out from pre-production to DAWOOD USMAN TEXTILES: Inventory adjustment  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_out_prep">
+                                          <t t-set="gre_out_prep_adj_qty" t-value="-(gre_out_prep_adj_qty + gre_out_prep.qty_done)"/>
+                                      </t>
+<!--                         Grige out from pre-production to DAWOOD USMAN TEXTILES: Inventory adjustment End  -->
+
+<!--                                        Grige out from pre-production to Virtual Location: Inventory adjustment  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 5), ('state','=', 'done')])" t-as="gre_out_fprep">
+                                          <t t-set="gre_out_prep_vladj_qty" t-value="-(gre_out_prep_vladj_qty + gre_out_fprep.qty_done)"/>
+                                      </t>
+<!--                         Grige out from pre-production to Virtual Location Adjustment End  -->
+
+<!--                     Grige out from Prep TO DAWOOD USMAN TEXTILES: Inventory adjustment TO GStock  -->
+<!--                                       <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_in_gstock">
+                                          <t t-set="gre_to_gstock_adj" t-value="gre_to_gstock_adj + gre_in_gstock.qty_done"/>
+                                      </t> -->
+<!--                    Grige out from Prep To DAWOOD USMAN TEXTILES: Inventory adjustment End  -->
+
+<!--                    Grige in from DAWOOD USMAN TEXTILES: Inventory adjustment TO WH/Stock Start  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 12), ('state','=', 'done')])" t-as="gre_in_whstock">
+                                          <t t-set="gre_whstock_adj" t-value="gre_whstock_adj + gre_in_whstock.qty_done"/>
+                                      </t>
+<!--                     Grige in from DAWOOD USMAN TEXTILES: Inventory adjustment TO WH/Stock End  -->
+
+<!--                     Grige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Pre-Production Srtart -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_to_pre_prd">
+                                          <t t-set="gre_to_pre_prd_adj" t-value="gre_to_pre_prd_adj + gre_to_pre_prd.qty_done"/>
+                                      </t>
+<!--                         Grige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Pre-Production End -->
+
+<!--              Grige In From Virtual Locations/Inventory adjustment To WH/Stock Srtart -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 5), ('location_dest_id','=', 12), ('state','=', 'done')])" t-as="gre_to_whstock">
+                                          <t t-set="gre_to_whtock_adj" t-value="gre_to_whtock_adj + gre_to_whstock.qty_done"/>
+                                      </t>
+<!--                         Grige In From Virtual Locations/Inventory adjustment To WH/Stock End -->
+
+<!--Greige Out From Physical Locations/WH/Stock/GStock To DAWOOD USMAN TEXTILES: Inventory adjustment Start   -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_out_adj">
+                                          <t t-set="gre_adj_qty" t-value="-(gre_adj_qty + gre_out_adj.qty_done)"/>
+                                      </t>
+<!--                                       Greig out from Wh/stock to pre-production -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 12), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_out_wst_prep">
+                                          <t t-set="gre_out_whstck_qty" t-value="gre_out_whstck_qty + gre_out_wst_prep.qty_done"/>
+                                      </t>
+
+<!--                                       Greig out from Wh/stock to pre-production End -->
+
+<!--Greige Out From Physical Locations/WH/Stock/GStock To DAWOOD USMAN TEXTILES: Inventory adjustmentEnd  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+                                          <t t-set="mo_num_qty" t-value="mo_num_qty + mo_num.qty_done"/>
+                                      </t>
+
+
+<!--                         Greige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Gstock -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 20), ('state','=', 'done')])" t-as="gre_fdvadj_gstock">
+                                          <t t-set="greige_gstock_adj" t-value="greige_gstock_adj + gre_fdvadj_gstock.qty_done"/>
+                                      </t>
+
+
+
+<!--                                       <t t-set="lot_rec_date" t-value="from_stock.date"/> -->
+                                      <t t-if="sum_lot_name != from_stock.lot_id.name">
+                                          <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                          <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                          <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/>
+<!--                                          Show All Lines Start-->
+                                          <t t-if="docs.zero_balance == False and docs.negative_balance == False">
+                                                 <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id),('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="same_lot_qty"/> -->
+                                              </td>
+                                          </tr>
+                                              </t>
+<!--                                              Show All Lines End-->
+<!--                                           Exclude Zero Balance and negative balance Lines Start -->
+                                          <t t-if="docs.zero_balance == True and docs.negative_balance == True">
+                                              <t t-if="not balance_qty == 0 and not balance_qty &lt; 0">
+                                                 <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>
+                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + from_stock_lot_adj_qty + to_stock_lot_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                              </t>
+
+                                          </t>
+<!--                                           Exclude Zero Balance and negative balance Lines End -->
+<!--                                           Exclude Zero Balance Lines Start -->
+                                          <t t-if="docs.zero_balance == True and docs.negative_balance == False">
+                                              <t t-if="not balance_qty == 0">
+                                                  <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>
+                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + from_stock_lot_adj_qty + to_stock_lot_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id),('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                          </t>
+                                          </t>
+<!--                                 Exclude Zero Balance Lines Start End -->
+<!--                                           Exclude Negative Balance Lines Start -->
+                                          <t t-if="docs.zero_balance == False and docs.negative_balance == True">
+                                              <t t-if="not balance_qty &lt; 0">
+                                                 <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id),('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                              </t>
+                                          </t>
+
+<!--                                           Exclude Negative Balance Lines End -->
+
+                                     </t>
+                                      <t t-set="sum_lot_name" t-value="from_stock.lot_id.name"/>
+
+                                  </t>
+                                  <tr style="border: 1px solid black;">
+                                      <td colspan="3"><strong>Total:</strong></td>
+                                      <td colspan=""><t t-esc="'{0:,.2f}'.format(tot_gre_rec_qty)"/></td>
+                                      <td colspan=""><t t-esc="'{0:,.2f}'.format(tot_gre_ret_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(tot_gre_adj_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(total_gre_used_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(total_balance_qty)"/></td>
+                                  </tr>
+                              </tbody>
+
+
+                          </table>
+                      </div>
+                      </t>
+                      <t t-if="owner_from_stock_ids and from_stock_ids">
+                        <div class="row">
+                           <table style="width:100%; border: 1px solid black;">
+                               <thead>
+                                  <tr>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">L.Rec Date:</th>
+                                      <th style="width:15%; border: 1px solid black; padding-left: 5px;">Owner:</th>
+                                      <th style="width:7%; border: 1px solid black; padding-left: 5px;">Lot No:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Rec:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Ret:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Adj:</th>
+                                      <th style="width:30%; border: 1px solid black; padding-left: 5px;">MO#:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">G. Used:</th>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">Balance:</th>
+                                  </tr>
+                               </thead>
+                               <tbody>
+                                   <t t-set="sum_lot_name" t-value="[]"/>
+                                   <t t-set="sum_same_lot_qty" t-value="0"/>
+                                   <t t-set="tot_gre_rec_qty" t-value="0"/>
+                                   <t t-set="tot_gre_ret_qty" t-value="0"/>
+                                   <t t-set="tot_gre_adj_qty" t-value="0"/>
+                                   <t t-set="total_gre_used_qty" t-value="0"/>
+                                   <t t-set="total_balance_qty" t-value="0"/>
+                                   <t t-foreach="owner_from_stock_ids.sorted(key=lambda a: (a.lot_id.name, a.date))" t-as="owner_from_stock">
+                                      <t t-set="lot_rec_date" t-value="0"/>
+                                      <t t-set="same_lot_qty" t-value="0"/>
+                                      <t t-set="lot_ret_qty" t-value="0"/>
+                                      <t t-set="lot_gre_adj_qty" t-value="0"/>
+                                      <t t-set="gre_adj_qty" t-value="0"/>
+                                      <t t-set="greige_gstock_adj" t-value="0"/>
+                                      <t t-set="gre_out_prep_adj_qty" t-value="0"/>
+                                      <t t-set="gre_out_prep_vladj_qty" t-value="0"/>
+                                      <t t-set="gre_out_whstck_qty" t-value="0"/>
+                                      <t t-set="gre_to_gstock_adj" t-value="0"/>
+                                      <t t-set="gre_to_whtock_adj" t-value="0"/>
+                                      <t t-set="gre_whstock_adj" t-value="0"/>
+                                      <t t-set="gre_to_pre_prd_adj" t-value="0"/>
+                                      <t t-set="gre_adj_qty" t-value="0"/>
+                                      <t t-set="to_stock_lot_adj_qty" t-value="0"/>
+                                      <t t-set="gre_in_stock" t-value="0"/>
+                                      <t t-set="from_stock_lot_adj_qty" t-value="0"/>
+                                      <t t-set="owner_name" t-value="0"/>
+                                      <t t-set="mo_ref" t-value="0"/>
+                                      <t t-set="mo_num_qty" t-value="0"/>
+                                      <t t-set="gre_use_qty" t-value="0"/>
+                                      <t t-set="balance_qty" t-value="0"/>
+                                       <t t-foreach="owner_from_stock_ids.sorted(key=lambda b: b.lot_id.name)" t-as="in_owner_from_stock">
+                                           <t t-if="in_owner_from_stock.lot_id.name == owner_from_stock.lot_id.name">
+                                               <t t-set="same_lot_qty" t-value="same_lot_qty+in_owner_from_stock.qty_done"/>
+                                               <t t-set="lot_rec_date" t-value="in_owner_from_stock.date "/>
+                                               <t t-set="owner_name" t-value="in_owner_from_stock.owner_id.name"/>
+                                          </t>
+                                       </t>
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 9), ('state','=', 'done')])" t-as="gre_ret_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="lot_ret_qty" t-value="lot_ret_qty + gre_ret_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 5), ('location_dest_id','=', 20), ('state','=', 'done')])" t-as="gre_adj_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="to_stock_lot_adj_qty" t-value="to_stock_lot_adj_qty + gre_adj_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+<!--                  Greige Out From Gstock to Virtual Locations/Inventory adjustment Start -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 5), ('state','=', 'done')])" t-as="gre_adj_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="from_stock_lot_adj_qty" t-value="-(from_stock_lot_adj_qty + gre_adj_num.qty_done)"/>
+<!--                                           </t> -->
+                                      </t>
+
+<!--                    Greige Out From Gstock to Virtual Locations/Inventory adjustment End -->
+
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_out_num">
+                                          <t t-set="gre_use_qty" t-value="-(gre_use_qty + gre_out_num.qty_done)"/>
+                                      </t>
+
+<!--                     Grige out from pre-production to DAWOOD USMAN TEXTILES: Inventory adjustment  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_out_prep">
+                                          <t t-set="gre_out_prep_adj_qty" t-value="-(gre_out_prep_adj_qty + gre_out_prep.qty_done)"/>
+                                      </t>
+<!--                         Grige out from pre-production to DAWOOD USMAN TEXTILES: Inventory adjustment End  -->
+
+<!--                                        Grige out from pre-production to Virtual Location: Inventory adjustment  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 5), ('state','=', 'done')])" t-as="gre_out_fprep">
+                                          <t t-set="gre_out_prep_vladj_qty" t-value="-(gre_out_prep_vladj_qty + gre_out_fprep.qty_done)"/>
+                                      </t>
+<!--                         Grige out from pre-production to Virtual Location Adjustment End  -->
+
+<!--                     Grige out from Prep TO DAWOOD USMAN TEXTILES: Inventory adjustment TO GStock  -->
+<!--                                       <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_in_gstock">
+                                          <t t-set="gre_to_gstock_adj" t-value="gre_to_gstock_adj + gre_in_gstock.qty_done"/>
+                                      </t> -->
+<!--                    Grige out from Prep To DAWOOD USMAN TEXTILES: Inventory adjustment End  -->
+
+<!--                    Grige in from DAWOOD USMAN TEXTILES: Inventory adjustment TO WH/Stock Start  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 12), ('state','=', 'done')])" t-as="gre_in_whstock">
+                                          <t t-set="gre_whstock_adj" t-value="gre_whstock_adj + gre_in_whstock.qty_done"/>
+                                      </t>
+<!--                     Grige in from DAWOOD USMAN TEXTILES: Inventory adjustment TO WH/Stock End  -->
+
+<!--                     Grige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Pre-Production Srtart -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_to_pre_prd">
+                                          <t t-set="gre_to_pre_prd_adj" t-value="gre_to_pre_prd_adj + gre_to_pre_prd.qty_done"/>
+                                      </t>
+<!--                         Grige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Pre-Production End -->
+
+<!--              Grige In From Virtual Locations/Inventory adjustment To WH/Stock Srtart -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 5), ('location_dest_id','=', 12), ('state','=', 'done')])" t-as="gre_to_whstock">
+                                          <t t-set="gre_to_whtock_adj" t-value="gre_to_whtock_adj + gre_to_whstock.qty_done"/>
+                                      </t>
+<!--                         Grige In From Virtual Locations/Inventory adjustment To WH/Stock End -->
+
+<!--Greige Out From Physical Locations/WH/Stock/GStock To DAWOOD USMAN TEXTILES: Inventory adjustment Start   -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_out_adj">
+                                          <t t-set="gre_adj_qty" t-value="-(gre_adj_qty + gre_out_adj.qty_done)"/>
+                                      </t>
+<!--                                       Greig out from Wh/stock to pre-production -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 12), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_out_wst_prep">
+                                          <t t-set="gre_out_whstck_qty" t-value="gre_out_whstck_qty + gre_out_wst_prep.qty_done"/>
+                                      </t>
+
+<!--                                       Greig out from Wh/stock to pre-production End -->
+
+<!--Greige Out From Physical Locations/WH/Stock/GStock To DAWOOD USMAN TEXTILES: Inventory adjustmentEnd  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+                                          <t t-set="mo_num_qty" t-value="mo_num_qty + mo_num.qty_done"/>
+                                      </t>
+
+
+<!--                         Greige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Gstock -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 20), ('state','=', 'done')])" t-as="gre_fdvadj_gstock">
+                                          <t t-set="greige_gstock_adj" t-value="greige_gstock_adj + gre_fdvadj_gstock.qty_done"/>
+                                      </t>
+
+<!--                        Greige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Gstock End -->
+
+                                       <t t-if="sum_lot_name != owner_from_stock.lot_id.name">
+                                           <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/>
+<!--                          Exclude Zero Balance and negative balance Lines Start -->
+                                          <t t-if="docs.zero_balance == True and docs.negative_balance == True">
+                                              <t t-if="not balance_qty == 0 and not balance_qty &lt; 0">
+                                                  <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="owner_from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+<!--                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>-->
+<!--                                                   <t t-if="not mo_num_qty and gre_use_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - gre_use_qty)"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+                                              </td>
+                                          </tr>
+                                              </t>
+                                          </t>
+<!--                                  Exclude Zero and negative Balance Lines End -->
+
+<!--                                     Show All Lines -->
+                                          <t t-if="docs.zero_balance == False and docs.negative_balance == False">
+                                          <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="owner_from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+<!--                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>-->
+<!--                                                   <t t-if="not mo_num_qty and gre_use_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - gre_use_qty)"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+                                              </td>
+                                          </tr>
+                                            </t>
+                                          </t>
+<!--                                     Exclude Zero balance lines End -->
+<!--                                     Exclude Negative Balance Lines Start -->
+                                          <t t-if="docs.zero_balance == False and docs.negative_balance == True">
+                                              <t t-if="not balance_qty &lt; 0">
+                                                  <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="owner_from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', owner_from_stock.lot_id.id), ('owner_id','=', owner_from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                              <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+<!--                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>-->
+<!--                                                   <t t-if="not mo_num_qty and gre_use_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - gre_use_qty)"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                              </t>
+<!--                                          </t>-->
+<!--                                            Exclude Negative Balance Lines End -->
+                                           </t>
+                                           <t t-set="sum_lot_name" t-value="owner_from_stock.lot_id.name"/>
+                                   </t>
+                                   <tr style="border: 1px solid black; background-color: ">
+                                      <td colspan="3"><strong>Total:</strong></td>
+                                      <td colspan=""><t t-esc="'{0:,.2f}'.format(tot_gre_rec_qty)"/></td>
+                                      <td colspan=""><t t-esc="'{0:,.2f}'.format(tot_gre_ret_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(tot_gre_adj_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(total_gre_used_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(total_balance_qty)"/></td>
+                                  </tr>
+                               </tbody>
+                            </table>
+                        </div>
+                      </t>
+                      <t t-if="owner_stock_ids and not from_stock_ids">
+                          <div class="row">
+                          <table style="width:100%; border: 1px solid black;">
+                              <thead>
+                                  <tr>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">L.Rec Date:</th>
+                                      <th style="width:15%; border: 1px solid black; padding-left: 5px;">Owner:</th>
+                                      <th style="width:7%; border: 1px solid black; padding-left: 5px;">Lot No:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Rec:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Ret:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">Gre Adj:</th>
+                                      <th style="width:30%; border: 1px solid black; padding-left: 5px;">MO#:</th>
+                                      <th style="width:8%; border: 1px solid black; padding-left: 5px;">G. Used:</th>
+                                      <th style="width:10%; border: 1px solid black; padding-left: 5px;">Balance:</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+
+                                  <t t-set="sum_lot_name" t-value="[]"/>
+                                  <t t-set="sum_same_lot_qty" t-value="0"/>
+                                  <t t-set="tot_gre_rec_qty" t-value="0"/>
+                                  <t t-set="tot_gre_ret_qty" t-value="0"/>
+                                  <t t-set="tot_gre_adj_qty" t-value="0"/>
+                                  <t t-set="total_gre_used_qty" t-value="0"/>
+                                  <t t-set="total_balance_qty" t-value="0"/>
+                                  <t t-foreach="owner_stock_ids.sorted(key=lambda a: a.lot_id.name)" t-as="from_stock">
+                                      <t t-set="lot_rec_date" t-value="0"/>
+                                      <t t-set="same_lot_qty" t-value="0"/>
+                                      <t t-set="lot_ret_qty" t-value="0"/>
+                                      <t t-set="lot_gre_adj_qty" t-value="0"/>
+                                      <t t-set="gre_adj_qty" t-value="0"/>
+                                      <t t-set="greige_gstock_adj" t-value="0"/>
+                                      <t t-set="gre_out_prep_adj_qty" t-value="0"/>
+                                      <t t-set="gre_out_prep_vladj_qty" t-value="0"/>
+                                      <t t-set="gre_out_whstck_qty" t-value="0"/>
+                                      <t t-set="gre_to_gstock_adj" t-value="0"/>
+                                      <t t-set="gre_to_whtock_adj" t-value="0"/>
+                                      <t t-set="gre_whstock_adj" t-value="0"/>
+                                      <t t-set="gre_to_pre_prd_adj" t-value="0"/>
+                                      <t t-set="gre_adj_qty" t-value="0"/>
+                                      <t t-set="to_stock_lot_adj_qty" t-value="0"/>
+                                      <t t-set="gre_in_stock" t-value="0"/>
+                                      <t t-set="from_stock_lot_adj_qty" t-value="0"/>
+                                      <t t-set="owner_name" t-value="0"/>
+                                      <t t-set="mo_ref" t-value="0"/>
+                                      <t t-set="mo_num_qty" t-value="0"/>
+                                      <t t-set="gre_use_qty" t-value="0"/>
+                                      <t t-set="balance_qty" t-value="0"/>
+<!--                                       Same lot Quantity and last receiving date section -->
+                                      <t t-foreach="owner_stock_ids.sorted(key=lambda b: b.lot_id.name)" t-as="from_stock_lot">
+                                          <t t-if="from_stock_lot.lot_id.name == from_stock.lot_id.name">
+                                              <t t-set="same_lot_qty" t-value="same_lot_qty+from_stock_lot.qty_done"/>
+                                              <t t-set="lot_rec_date" t-value="from_stock_lot.date "/>
+                                              <t t-set="owner_name" t-value="from_stock_lot.owner_id.name"/>
+                                          </t>
+
+                                      </t>
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 9), ('state','=', 'done')])" t-as="gre_ret_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="lot_ret_qty" t-value="lot_ret_qty + gre_ret_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 5), ('location_dest_id','=', 20), ('state','=', 'done')])" t-as="gre_adj_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="to_stock_lot_adj_qty" t-value="to_stock_lot_adj_qty + gre_adj_num.qty_done"/>
+<!--                                           </t> -->
+                                      </t>
+
+<!--                  Greige Out From Gstock to Virtual Locations/Inventory adjustment Start -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 5), ('state','=', 'done')])" t-as="gre_adj_num">
+<!--                                           <t t-if="process_num.lot_id.name == sum_lot_name"> -->
+                                              <t t-set="from_stock_lot_adj_qty" t-value="-(from_stock_lot_adj_qty + gre_adj_num.qty_done)"/>
+<!--                                           </t> -->
+                                      </t>
+
+<!--                    Greige Out From Gstock to Virtual Locations/Inventory adjustment End -->
+
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_out_num">
+                                          <t t-set="gre_use_qty" t-value="-(gre_use_qty + gre_out_num.qty_done)"/>
+                                      </t>
+
+<!--                     Grige out from pre-production to DAWOOD USMAN TEXTILES: Inventory adjustment  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_out_prep">
+                                          <t t-set="gre_out_prep_adj_qty" t-value="-(gre_out_prep_adj_qty + gre_out_prep.qty_done)"/>
+                                      </t>
+<!--                         Grige out from pre-production to DAWOOD USMAN TEXTILES: Inventory adjustment End  -->
+
+<!--                                        Grige out from pre-production to Virtual Location: Inventory adjustment  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 5), ('state','=', 'done')])" t-as="gre_out_fprep">
+                                          <t t-set="gre_out_prep_vladj_qty" t-value="-(gre_out_prep_vladj_qty + gre_out_fprep.qty_done)"/>
+                                      </t>
+<!--                         Grige out from pre-production to Virtual Location Adjustment End  -->
+
+<!--                     Grige out from Prep TO DAWOOD USMAN TEXTILES: Inventory adjustment TO GStock  -->
+<!--                                       <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 18), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_in_gstock">
+                                          <t t-set="gre_to_gstock_adj" t-value="gre_to_gstock_adj + gre_in_gstock.qty_done"/>
+                                      </t> -->
+<!--                    Grige out from Prep To DAWOOD USMAN TEXTILES: Inventory adjustment End  -->
+
+<!--                    Grige in from DAWOOD USMAN TEXTILES: Inventory adjustment TO WH/Stock Start  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 12), ('state','=', 'done')])" t-as="gre_in_whstock">
+                                          <t t-set="gre_whstock_adj" t-value="gre_whstock_adj + gre_in_whstock.qty_done"/>
+                                      </t>
+<!--                     Grige in from DAWOOD USMAN TEXTILES: Inventory adjustment TO WH/Stock End  -->
+
+<!--                     Grige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Pre-Production Srtart -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_to_pre_prd">
+                                          <t t-set="gre_to_pre_prd_adj" t-value="gre_to_pre_prd_adj + gre_to_pre_prd.qty_done"/>
+                                      </t>
+<!--                         Grige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Pre-Production End -->
+
+<!--              Grige In From Virtual Locations/Inventory adjustment To WH/Stock Srtart -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 5), ('location_dest_id','=', 12), ('state','=', 'done')])" t-as="gre_to_whstock">
+                                          <t t-set="gre_to_whtock_adj" t-value="gre_to_whtock_adj + gre_to_whstock.qty_done"/>
+                                      </t>
+<!--                         Grige In From Virtual Locations/Inventory adjustment To WH/Stock End -->
+
+<!--Greige Out From Physical Locations/WH/Stock/GStock To DAWOOD USMAN TEXTILES: Inventory adjustment Start   -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 20), ('location_dest_id','=', 45), ('state','=', 'done')])" t-as="gre_out_adj">
+                                          <t t-set="gre_adj_qty" t-value="-(gre_adj_qty + gre_out_adj.qty_done)"/>
+                                      </t>
+<!--                                       Greig out from Wh/stock to pre-production -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 12), ('location_dest_id','=', 18), ('state','=', 'done')])" t-as="gre_out_wst_prep">
+                                          <t t-set="gre_out_whstck_qty" t-value="gre_out_whstck_qty + gre_out_wst_prep.qty_done"/>
+                                      </t>
+
+<!--                                       Greig out from Wh/stock to pre-production End -->
+
+<!--Greige Out From Physical Locations/WH/Stock/GStock To DAWOOD USMAN TEXTILES: Inventory adjustmentEnd  -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+                                          <t t-set="mo_num_qty" t-value="mo_num_qty + mo_num.qty_done"/>
+                                      </t>
+
+
+<!--                         Greige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Gstock -->
+                                      <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id','=', 236), ('location_id','=', 45), ('location_dest_id','=', 20), ('state','=', 'done')])" t-as="gre_fdvadj_gstock">
+                                          <t t-set="greige_gstock_adj" t-value="greige_gstock_adj + gre_fdvadj_gstock.qty_done"/>
+                                      </t>
+
+<!--                        Greige In From DAWOOD USMAN TEXTILES: Inventory adjustment To Gstock End -->
+
+<!--                                       <t t-set="lot_rec_date" t-value="from_stock.date"/> -->
+                                      <t t-if="sum_lot_name != from_stock.lot_id.name">
+<!--                                          <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>-->
+<!--                                          <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>-->
+<!--                                          <t t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty) - mo_num_qty"/>-->
+
+<!--                             Show All Lines Start -->
+                                          <t t-if="docs.zero_balance == False and docs.negative_balance == False">
+                                          <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+<!--                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>-->
+<!--                                                   <t t-if="not mo_num_qty and gre_use_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - gre_use_qty)"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                          </t>
+<!--                                  Show All Balance Lines End -->
+<!--                                           Excludde Zero Balance Lines Start -->
+                                          <t t-if="docs.zero_balance == True and docs.negative_balance == False">
+                                            <t t-if="not balance_qty == 0">
+<tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+<!--                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>-->
+<!--                                                   <t t-if="not mo_num_qty and gre_use_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - gre_use_qty)"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                            </t>
+                                          </t>
+<!--                                           Exclude Zero Balance Lines End -->
+<!--                                           Exclude Negative Balance Lines Start -->
+                                          <t t-if="docs.zero_balance == False and docs.negative_balance == True">
+                                            <t t-if="not balance_qty &lt; 0">
+                                                <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+<!--                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>-->
+<!--                                                   <t t-if="not mo_num_qty and gre_use_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - gre_use_qty)"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                              </t>
+                                          </t>
+
+<!--                                         Exclude Negative Balance Lines End -->
+
+<!--                                 Exclude zero and Negative Balance Lines Start -->
+                                          <t t-if="docs.zero_balance == True and docs.negative_balance == True">
+                                              <t t-if="not balance_qty == 0 and not balance_qty &lt; 0">
+                                                  <tr>
+    <!--                                           <t t-set="lot_rec_date" t-value="0"/> -->
+                                              <td style="width:12%; padding-left:5px;">
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(lot_rec_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                                  <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                                  <t t-esc="date"/>
+                                              </td>
+                                              <td style="width:15%; padding-left:5px;"><t t-esc="owner_name"/></td>
+                                              <td style="width:6%; padding-left:5px;"><t t-esc="from_stock.lot_id.name"/></td>
+                                              <td style="width:8%; padding-left:5px;">
+<!--                                                   <t t-esc="from_stock.qty_done"/> -->
+                                                  <t t-esc="'{0:,.2f}'.format(same_lot_qty)"/>
+                                                  <t t-set="tot_gre_rec_qty" t-value="tot_gre_rec_qty + same_lot_qty"/>
+                                              </td>
+                                              <td>
+                                                  <t t-esc="'{0:,.2f}'.format(lot_ret_qty)"/>
+                                                  <t t-set="tot_gre_ret_qty" t-value="tot_gre_ret_qty + lot_ret_qty"/>
+                                              </td>
+                                              <td>
+
+<!--                                                  <t t-if="from_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(from_stock_lot_adj_qty)"/>-->
+<!--                                                  <t t-if="to_stock_lot_adj_qty" t-esc="'{0:,.2f}'.format(to_stock_lot_adj_qty)"/>-->
+<!--                                                   <t t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty + gre_to_gstock_adj + gre_out_prep_adj_qty + gre_to_pre_prd_adj + gre_to_whtock_adj - gre_adj_qty + gre_out_prep_adj_qty"/> -->
+                                                  <t t-if="to_stock_lot_adj_qty and from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and not to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="not from_stock_lot_adj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + to_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_to_whtock_adj" t-set="lot_gre_adj_qty" t-value="gre_to_whtock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_adj_qty and gre_whstock_adj" t-set="lot_gre_adj_qty" t-value="gre_whstock_adj + from_stock_lot_adj_qty"/>
+
+                                                  <t t-if="gre_to_gstock_adj and gre_whstock_adj and gre_adj_qty and not gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="gre_adj_qty + gre_whstock_adj"/>
+
+                                                  <t t-if="greige_gstock_adj and gre_out_prep_adj_qty" t-set="lot_gre_adj_qty" t-value="greige_gstock_adj + gre_out_prep_adj_qty"/>
+
+                                                  <t t-if="from_stock_lot_adj_qty and gre_out_prep_vladj_qty and to_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="to_stock_lot_adj_qty + from_stock_lot_adj_qty +  gre_out_prep_vladj_qty"/>
+                                                  <t t-if="gre_out_prep_vladj_qty and gre_to_pre_prd_adj" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_vladj_qty +  gre_to_pre_prd_adj"/>
+
+                                                  <t t-if="gre_adj_qty and gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+                                                  <t t-if="gre_to_pre_prd_adj and not gre_adj_qty and gre_use_qty and mo_num_qty and not gre_out_prep_vladj_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_to_pre_prd_adj"/>
+                                                   <t t-if="gre_out_prep_adj_qty and not gre_use_qty and not mo_num_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_out_prep_adj_qty"/>
+
+                                                   <t t-if="gre_out_whstck_qty and mo_num_qty > gre_out_whstck_qty and not gre_adj_qty and not gre_out_prep_vladj_qty and not from_stock_lot_adj_qty" t-set="lot_gre_adj_qty" t-value="mo_num_qty - gre_out_whstck_qty"/>
+
+                                                  <t t-if="gre_adj_qty and mo_num_qty and gre_use_qty and mo_num_qty == gre_use_qty" t-set="lot_gre_adj_qty" t-value="lot_gre_adj_qty + gre_adj_qty"/>
+
+
+                                                  <t t-esc="'{0:,.2f}'.format(lot_gre_adj_qty)"/>
+                                                  <t t-set="tot_gre_adj_qty" t-value="tot_gre_adj_qty + lot_gre_adj_qty"/>
+                                              </td>
+                                              <td style="width:38%; padding-left:5px;">
+                                                  <t t-foreach="request.env['stock.move.line'].sudo().search([('lot_id','=', from_stock.lot_id.id), ('owner_id','=', from_stock.owner_id.id), ('product_id.categ_id.id','=', 236), ('location_dest_id','in', (7, 48)), ('state','=', 'done')])" t-as="mo_num">
+
+                                                  <t t-esc="mo_num.reference"/>,
+                                                  </t>
+                                              </td>
+                                               <td style="width:8%; padding-left:5px;">
+                                                   <t t-esc="'{0:,.2f}'.format(mo_num_qty)"/>
+                                                   <t t-set="total_gre_used_qty" t-value="total_gre_used_qty + mo_num_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                              <td style="width:10%; padding-left:5px;">
+<!--                                                   <t t-if="to_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + to_stock_lot_adj_qty) - mo_num_qty"/>
+                                                  <t t-if="not to_stock_lot_adj_qty and not from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty) - mo_num_qty"/>
+                                                  <t t-if="from_stock_lot_adj_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty - from_stock_lot_adj_qty) - mo_num_qty"/> -->
+<!--                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>-->
+<!--                                                   <t t-if="not mo_num_qty and gre_use_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - gre_use_qty)"/> -->
+                                                  <t t-if="not mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty)"/>
+                                                  <t t-if="mo_num_qty" t-set="balance_qty" t-value="(same_lot_qty - lot_ret_qty + lot_gre_adj_qty - mo_num_qty)"/>
+                                                  <t t-esc="'{0:,.2f}'.format(balance_qty)"/>
+                                                  <t t-set="total_balance_qty" t-value="total_balance_qty + balance_qty"/>
+<!--                                                    <t t-esc="sum_mo_num_qty"/> -->
+                                              </td>
+                                          </tr>
+                                              </t>
+                                          </t>
+<!--                                           Exclude zero and Negative Balance Lines End -->
+
+                                     </t>
+                                      <t t-set="sum_lot_name" t-value="from_stock.lot_id.name"/>
+
+                                  </t>
+                                  <tr style="border: 1px solid black;">
+                                      <td colspan="3"><strong>Total:</strong></td>
+                                      <td colspan=""><t t-esc="'{0:,.2f}'.format(tot_gre_rec_qty)"/></td>
+                                      <td colspan=""><t t-esc="'{0:,.2f}'.format(tot_gre_ret_qty)"/></td>
+                                      <td colspan="2"><t t-esc="'{0:,.2f}'.format(tot_gre_adj_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(total_gre_used_qty)"/></td>
+                                      <td><t t-esc="'{0:,.2f}'.format(total_balance_qty)"/></td>
+                                  </tr>
+                              </tbody>
+
+
+                          </table>
+                      </div>
+
+                      </t>
+                  </div>
+              </div>
+          </t>
+      </t>
+    </template>
+</odoo>

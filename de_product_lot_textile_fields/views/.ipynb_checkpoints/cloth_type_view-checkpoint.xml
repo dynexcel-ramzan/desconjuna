@@ -1,0 +1,42 @@
+<odoo>
+    <!-- Gate Form View -->
+    <record id="cloth_type_form_view" model="ir.ui.view">
+        <field name="name">cloth.type.form.view</field>
+        <field name="model">product.cloth.type</field>
+        <field name="arch" type="xml">
+            <form string="Grey Type">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <!-- Gate Tree View -->
+    <record id="cloth_type_tree_view" model="ir.ui.view">
+        <field name="name">cloth.type.tree.view</field>
+        <field name="model">product.cloth.type</field>
+        <field name="arch" type="xml">
+            <tree string="Grey Type">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Gate Action View -->
+    <record id="cloth_type_action" model="ir.actions.act_window">
+        <field name="name">Cloth Type</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">product.cloth.type</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+          <p class="oe_view_nocontent_create">
+            Click here to create a new Cloth Type
+          </p>
+        </field>
+    </record>
+    <menuitem id="cloth_type_menu" name="Cloth Type" parent="stock.menu_product_in_config_stock" action="cloth_type_action" sequence="1"/>
+
+    
+</odoo>

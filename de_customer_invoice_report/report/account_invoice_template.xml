@@ -1,0 +1,133 @@
+<odoo>
+    <template id="invoice_report_customer">
+      <t t-call="web.html_container">
+          <t t-foreach="docs" t-as="docs">
+              <div class="article o_report_layout_standard" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id">
+                  <div class="page">
+                      <h3 style=" text-align: center">Monthly Processing Report</h3>
+                      <br/>
+                      <t t-set="date_from" t-value="0"/>
+                      <div style="width:100%;">
+                          <p style="text-align: center;">
+<!--                             <t t-set="date_from" t-value="datetime.datetime.strptime(str(docs.from_date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/> -->
+                              <strong>From:<t t-esc="datetime.datetime.strptime(str(docs.date_from), '%Y-%m-%d').strftime('%d %b %Y')" />  T0: <t  t-esc="datetime.datetime.strptime(str(docs.date_to), '%Y-%m-%d').strftime('%d %b %Y')"/></strong></p>
+                      </div>
+                      <div style="width: 100%;">
+                          <table style="width:100%; border: 1px solid black;">
+                              <thead>
+                                  <tr>
+                                      <th style="width: 9%; border: 1px solid black; padding-left: 5px;">Invoice Date</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">SO#</th>
+                                      <th style="width: 11%; border: 1px solid black; padding-left: 5px;">Invoice No.</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">Fresh</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">B Grade</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">Cut Piece</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">White</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">Ecru</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">Light</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">Medium</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">Dark</th>
+                                      <th style="width: 8%; border: 1px solid black; padding-left: 5px;">Black</th>
+                                  </tr>
+                              </thead>
+                              <tbody>
+                                  <t t-set="tot_fresh_qty" t-value="0"/>
+                                  <t t-set="tot_bgrade_qty" t-value="0"/>
+                                  <t t-set="tot_cut_piece_qty" t-value="0"/>
+                                  <t t-set="tot_white_qty" t-value="0"/>
+                                  <t t-set="tot_ecru_qty" t-value="0"/>
+                                  <t t-set="tot_light_qty" t-value="0"/>
+                                  <t t-set="tot_medium_qty" t-value="0"/>
+                                  <t t-set="tot_dark_qty" t-value="0"/>
+                                  <t t-set="tot_black_qty" t-value="0"/>
+                                  <t t-foreach="invoice_ids.sorted(key=lambda x: (x.invoice_date), reverse=False)" t-as="invoice">
+                                      <t t-set="fresh_qty" t-value="0"/>
+                                      <t t-set="bgrade_qty" t-value="0"/>
+                                      <t t-set="cut_piece_qty" t-value="0"/>
+                                      <t t-set="white_qty" t-value="0"/>
+                                      <t t-set="ecru_qty" t-value="0"/>
+                                      <t t-set="light_qty" t-value="0"/>
+                                      <t t-set="medium_qty" t-value="0"/>
+                                      <t t-set="dark_qty" t-value="0"/>
+                                      <t t-set="black_qty" t-value="0"/>
+                                      <t t-foreach="invoice.invoice_line_ids" t-as="line">
+                                          <t t-if="'Fresh' in line.name or line.package_id.shipping_grade == 'fresh'" t-set="fresh_qty" t-value="fresh_qty + line.quantity"/>
+                                          <t t-if="line.name== 'B-Grade'" t-set="bgrade_qty" t-value="bgrade_qty + line.quantity"/>
+                                          <t t-if="line.name == 'Cut Piece'" t-set="cut_piece_qty" t-value="cut_piece_qty + line.quantity"/>
+                                          <t t-foreach="line.analytic_tag_ids" t-as="tag">
+                                              <t t-if="tag.name in ('White')" t-set="white_qty" t-value="white_qty + line.quantity"/>
+                                              <t t-if="tag.name in ('Ecru')" t-set="ecru_qty" t-value="ecru_qty + line.quantity"/>
+                                              <t t-if="tag.name in ('Light')" t-set="light_qty" t-value="light_qty + line.quantity"/>
+                                              <t t-if="tag.name in ('Medium')" t-set="medium_qty" t-value="medium_qty + line.quantity"/>
+                                              <t t-if="tag.name in ('Dark')" t-set="dark_qty" t-value="dark_qty + line.quantity"/>
+                                              <t t-if="tag.name in ('Black')" t-set="black_qty" t-value="black_qty + line.quantity"/>
+
+                                          </t>
+                                      </t>
+                                      <tr>
+                                          <td style="width: 9%; border: 1px solid black; text-align: center;"><t t-esc="datetime.datetime.strptime(str(invoice.invoice_date), '%Y-%m-%d').strftime('%d-%m-%Y')"/></td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="invoice.invoice_origin"/></td>
+                                          <td style="width: 11%; border: 1px solid black; text-align: center;"><t t-esc="invoice.name"/></td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="fresh_qty"/>
+                                              <t t-set="tot_fresh_qty" t-value="tot_fresh_qty + fresh_qty"/>
+                                          </td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="bgrade_qty"/>
+                                              <t t-set="tot_bgrade_qty" t-value="tot_bgrade_qty + bgrade_qty"/>
+                                          </td>
+                                          <td style="width: 7%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="cut_piece_qty"/>
+                                              <t t-set="tot_cut_piece_qty" t-value="tot_cut_piece_qty + cut_piece_qty"/>
+                                          </td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="white_qty"/>
+                                              <t t-set="tot_white_qty" t-value="tot_white_qty + white_qty"/>
+                                          </td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="ecru_qty"/>
+                                              <t t-set="tot_ecru_qty" t-value="tot_ecru_qty + ecru_qty"/>
+                                          </td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="light_qty"/>
+                                              <t t-set="tot_light_qty" t-value="tot_light_qty + light_qty"/>
+                                          </td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="medium_qty"/>
+                                              <t t-set="tot_medium_qty" t-value="tot_medium_qty + medium_qty"/>
+                                          </td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="dark_qty"/>
+                                              <t t-set="tot_dark_qty" t-value="tot_dark_qty + dark_qty"/>
+                                          </td>
+                                          <td style="width: 8%; border: 1px solid black; text-align: center;">
+                                              <t t-esc="black_qty"/>
+                                              <t t-set="tot_black_qty" t-value="tot_black_qty + black_qty"/>
+                                          </td>
+                                      </tr>
+                                  </t>
+                                   <tr>
+                                       <td style="padding-left: 5px;"><strong>Total Qty: </strong></td>
+                                       <td></td>
+                                       <td></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_fresh_qty"/></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_bgrade_qty"/></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_cut_piece_qty"/></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_white_qty"/></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_ecru_qty"/></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_light_qty"/></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_medium_qty"/></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_dark_qty"/></td>
+                                       <td style="width: 8%; border: 1px solid black; text-align: center;"><t t-esc="tot_black_qty"/></td>
+                                    </tr>
+                              </tbody>
+                          </table>
+                      </div>
+
+
+                  </div>
+              </div>
+          </t>
+      </t>
+    </template>
+</odoo>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_stock_transfer_wizard" model="ir.actions.act_window">
+            <field name="name">Greige Stitch Information</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">stock.transfer.wizard</field>
+            <field name="view_id" ref="view_stock_transfer_wizard"/>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_stock_transfer_pdf"
+              name="Daily Stitch Report"
+              action="action_stock_transfer_wizard"
+              parent="stock.menu_warehouse_report"
+              sequence="120"/>
+</odoo>

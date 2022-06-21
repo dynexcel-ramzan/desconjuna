@@ -1,0 +1,7 @@
+<odoo>
+
+    <menuitem id="menu_stock_transfer_pdf"
+              name="Production Report"
+              action="de_stock_transfer_report.action_stock_transfer_wizard"
+              parent="stock.menu_warehouse_report"/>
+</odoo>

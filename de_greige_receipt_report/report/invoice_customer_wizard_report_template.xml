@@ -1,0 +1,250 @@
+<odoo>
+    <template id="greige_receipt_report_pdf">
+      <t t-call="web.html_container">
+          <t t-foreach="docs" t-as="docs">
+              <div class="article o_report_layout_standard" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id">
+                  <div class="page">
+                      <h3 style=" text-align: center">Greige Receipt</h3>
+                      <br/>
+                     <t t-set="date_from" t-value="0"/>
+                      <t t-set="date_to" t-value="0"/>
+                     <div style="width:100%;">
+                         <p style="text-align: center;">
+                             <t t-set="date_from" t-value="datetime.datetime.strptime(str(docs.date_from), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                             <t t-set="date_to" t-value="datetime.datetime.strptime(str(docs.date_to), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                             <strong>From:<t t-esc="date_from.strftime('%d %b %Y')" />  T0: <t t-esc="date_to.strftime('%d %b %Y')"/></strong></p>
+                     </div>
+                     <div style="width: 100%;">
+                         <t t-if="not docs.owner_ids">
+                         <table style="width:100%; border: 1px solid black;">
+                             <thead>
+                                 <tr>
+                                     <th style="width: 12%; border: 1px solid black; padding-left: 5px;">Date</th>
+                                     <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Doc#</th>
+                                     <th style="width: 30%; border: 1px solid black; padding-left: 5px;">Owner</th>
+                                     <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Lot</th>
+                                     <th style="width: 20%; border: 1px solid black; padding-left: 5px;">Quality</th>
+
+                                     <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Quantity</th>
+                                 </tr>
+                              </thead>
+                             <t t-set="date" t-value="0"/>
+                             <t t-set="tot_qty" t-value="0"/>
+                             <t t-set="owner_name" t-value="[]"/>
+                             <t t-set="unique_owner" t-value="0"/>
+                             <t t-set="stock_move_count" t-value="0"/>
+                             <t t-set="inner_stock_move_count" t-value="0"/>
+                             <t t-set="owner_tot_qty" t-value="0"/>
+                             <t t-set="stock_current_date" t-value="0"/>
+                             <t t-set="stock_date_tot_qty" t-value="0"/>
+                             <tbody>
+                                 <t t-foreach="stock_ids" t-as="stock">
+                                    <t t-set="stock_move_count" t-value="stock_move_count + 1"/>
+                                 </t>
+
+                                 <t t-foreach="stock_ids" t-as="stock">
+                                     <t t-if="stock.owner_id.id!=unique_owner and inner_stock_move_count!=0">
+                                         <tr style="border:1px solid black;">
+                                             <td colspan="5" style="padding-left:5px; color:blue;">Owner Qty Per Day:</td>
+                                             <td style="text-align:right; color:blue; padding-right:5px;"><span t-esc="'{0:,.2f}'.format(owner_tot_qty)"/></td>
+                                         </tr>
+                                         <t t-set="owner_tot_qty" t-value="0"/>
+                                     </t>
+                                      <t t-set="date" t-value="datetime.datetime.strptime(str(stock.date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                      <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+
+                                     <t t-if="stock.owner_id.id==unique_owner and inner_stock_move_count!=0 and stock_current_date!=date">
+                                         <tr style="border:1px solid black;">
+                                             <td colspan="5" style="padding-left:5px; color:blue;">Owner Qty Per Day:</td>
+                                             <td style="text-align:right; color:blue; padding-right:5px;"><span t-esc="'{0:,.2f}'.format(owner_tot_qty)"/></td>
+                                         </tr>
+                                         <t t-set="owner_tot_qty" t-value="0"/>
+                                     </t>
+
+
+
+                                      <t t-set="owner_tot_qty" t-value="owner_tot_qty + stock.qty_done"/>
+
+
+                                     <t t-if="stock_current_date!=date and inner_stock_move_count!=0">
+                                          <tr style="border:1px solid black;">
+                                              <td colspan="5" style="padding-left:5px; color:red;">Total Qty Per Day:</td>
+                                              <td style="text-align:right; color:red; padding-right:5px;"><span t-esc="'{0:,.2f}'.format(stock_date_tot_qty)"/></td>
+                                          </tr>
+                                         <t t-set="stock_date_tot_qty" t-value="0"/>
+                                       </t>
+                                        <t t-set="stock_date_tot_qty" t-value="stock_date_tot_qty + stock.qty_done"/>
+                                       <t t-set="inner_stock_move_count" t-value="inner_stock_move_count + 1"/>
+                                     <tr>
+                                         <t t-set="unique_owner" t-value="stock.owner_id.id"/>
+                                         <td style="width: 12%; padding-left: 5px;">
+                                             <t t-set="date" t-value="datetime.datetime.strptime(str(stock.date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                             <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                             <span t-esc="date"/>
+                                             <t t-set="stock_current_date" t-value="date"/>
+                                         </td>
+
+                                         <td style="width: 10%; padding-left: 5px;">
+                                             <span t-esc="stock.reference"/>
+                                         </td>
+                                         <td style="width: 30%; padding-left: 5px;">
+                                             <span t-esc="stock.owner_id.name"/>
+                                         </td>
+                                         <td style="width: 10%; padding-left: 5px;">
+                                             <span t-esc="stock.lot_id.name"/>
+                                         </td>
+                                         <td style="width: 20%; padding-left: 5px;">
+                                             <span t-esc="stock.lot_id.cloth_desc"/>
+                                         </td>
+
+                                         <td style="width: 10%; padding-right: 5px; text-align:right;">
+                                             <span t-esc="'{0:,.2f}'.format(stock.qty_done)"/>
+                                             <t t-set="tot_qty" t-value="tot_qty + stock.qty_done"/>
+                                         </td>
+                                     </tr>
+                                       <t t-if="inner_stock_move_count==stock_move_count">
+                                          <tr style="border: 1px solid black;">
+                                              <td colspan="5" style="padding-left:5px; color:blue;">Total Qty Owner:</td>
+                                              <td style="text-align:right; color:blue; padding-right:5px;"><span t-esc="'{0:,.2f}'.format(owner_tot_qty)"/></td>
+                                          </tr>
+                                        </t>
+                                     <t t-if="inner_stock_move_count==stock_move_count">
+                                          <tr style="border:1px solid black;">
+                                              <td colspan="5" style="padding-left:5px; color:red;">Total Quantity Per Day:</td>
+                                              <td style="text-align:right; color:red; padding-right:5px;"><span t-esc="'{0:,.2f}'.format(stock_date_tot_qty)"/></td>
+                                          </tr>
+                                         <t t-set="stock_date_tot_qty" t-value="0"/>
+                                       </t>
+                                 </t>
+                             </tbody>
+
+                             <tr style="border: 1px solid balck; background-color: #a4a4a4;">
+                                 <td colspan="5" style="border: 1px solid black; padding-left: 5px;"><strong>Total Quantity: </strong></td>
+                                 <td style="border: 1px solid black; text-align:center; padding-right:5px;"><t t-esc="'{0:,.2f}'.format(tot_qty)"/></td>
+<!--                                  <td></td>-->
+<!--&lt;!&ndash;                                  <td></td>&ndash;&gt;-->
+<!--                                  <td style="border: 1px solid black; text-align:center;">-->
+<!--                                      <t t-esc="'{0:,.2f}'.format(tot_untaxed_amount)"/>-->
+<!--                                  </td>-->
+<!--                                  <td style="border: 1px solid black; text-align:center;">-->
+<!--                                      <t t-esc="'{0:,.2f}'.format(tot_gst_amount)"/>-->
+<!--                                  </td>-->
+<!--                                  <td style="border: 1px solid black; text-align:center;">-->
+<!--                                      <t t-esc="'{0:,.2f}'.format(tot_taxed_amount)"/>-->
+<!--                                  </td>-->
+                             </tr>
+                         </table>
+                         </t>
+                         <t t-if="docs.owner_ids">
+                             <table style="width:100%; border: 1px solid black;">
+
+                             <thead>
+                                 <tr>
+                                     <th style="width: 12%; border: 1px solid black; padding-left: 5px;">Date</th>
+                                     <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Doc#</th>
+                                     <th style="width: 30%; border: 1px solid black; padding-left: 5px;">Owner</th>
+                                     <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Lot</th>
+                                     <th style="width: 20%; border: 1px solid black; padding-left: 5px;">Quality</th>
+                                     <th style="width: 10%; border: 1px solid black; padding-left: 5px;">Quantity</th>
+                                 </tr>
+                             </thead>
+
+                             <t t-set="date" t-value="0"/>
+                             <t t-set="current_date" t-value="0"/>
+                             <t t-set="tot_qty" t-value="0"/>
+                             <t t-set="sub_tot_qty" t-value="0"/>
+                             <t t-set="move_line_count" t-value="0"/>
+                             <t t-set="inner_move_line_count" t-value="0"/>
+                             <tbody>
+                                 <t t-foreach="request.env['stock.move.line'].sudo().search([('owner_id','in', docs.owner_ids.ids), ('date', '&gt;=', date_from), ('date', '&lt;=', date_to), ('location_id.id','=', 9), ('location_dest_id.id','=', 20), ('state','=', 'done')])" t-as="mv_line">
+                                     <t t-set="move_line_count" t-value="move_line_count+1"/>
+                                 </t>
+
+                                 <t t-foreach="request.env['stock.move.line'].sudo().search([('owner_id','in', docs.owner_ids.ids), ('date', '&gt;=', date_from), ('date', '&lt;=', date_to), ('location_id.id','=', 9), ('location_dest_id.id','=', 20), ('state','=', 'done')])" t-as="mv_line">
+                                     <t t-set="date" t-value="datetime.datetime.strptime(str(mv_line.date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                     <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+
+                                        <t t-if='current_date != date and inner_move_line_count!=0'>
+
+                                           <tr style="border:1px solid black;">
+                                             <td style="padding-left:5px; color:red;" colspan='5'>
+                                                Total Quantity Per Day:
+                                             </td>
+                                             <td style="text-align:right; padding-right:5px; color:red;">
+                                               <span t-esc="'{0:,.2f}'.format(sub_tot_qty)"/>
+                                             </td>
+                                           </tr>
+                                           <t t-set="sub_tot_qty" t-value="0"/>
+                                       </t>
+
+                                       <t t-set="sub_tot_qty" t-value="sub_tot_qty + mv_line.qty_done"/>
+                                       <t t-set="inner_move_line_count" t-value="inner_move_line_count+1"/>
+                                     <tr>
+
+                                         <td style="width: 12%; padding-left: 5px;">
+                                             <t t-set="date" t-value="datetime.datetime.strptime(str(mv_line.date), '%Y-%m-%d %H:%M:%S')+ relativedelta(hours =+ 5)"/>
+                                             <t t-set="date" t-value="datetime.datetime.strptime(str(date), '%Y-%m-%d %H:%M:%S').strftime('%d %b %Y')"/>
+                                             <span t-esc="date"/>
+                                             <t t-set="current_date" t-value="date"/>
+                                         </td>
+                                         <td style="width: 10%; padding-left: 5px;">
+                                             <span t-esc="mv_line.reference"/>
+                                         </td>
+                                         <td style="width: 30%; padding-left: 5px;">
+                                             <span t-esc="mv_line.owner_id.name"/>
+                                         </td>
+                                         <td style="width: 10%; padding-left: 5px;">
+                                             <span t-esc="mv_line.lot_id.name"/>
+                                         </td>
+                                         <td style="width: 20%; padding-left: 5px;">
+                                             <span t-esc="mv_line.lot_id.cloth_desc"/>
+                                         </td>
+
+                                         <td style="width: 10%; padding-right:  5px; text-align:right;">
+                                             <span t-esc="'{0:,.2f}'.format(mv_line.qty_done)"/>
+                                             <t t-set="tot_qty" t-value="tot_qty + mv_line.qty_done"/>
+                                         </td>
+                                     </tr>
+                                      <t t-if='inner_move_line_count==move_line_count'>
+
+                                          <tr style="border:1px solid black;">
+                                             <td style="padding-left:5px; color:red;" colspan='5'>
+                                                Total Quantity Per Day:
+                                             </td>
+                                             <td style="text-align:right; padding-right:5px; color:red;">
+                                               <span t-esc="'{0:,.2f}'.format(sub_tot_qty)"/>
+                                             </td>
+                                           </tr>
+                                           <t t-set="sub_tot_qty" t-value="0"/>
+                                       </t>
+                                 </t>
+
+
+                             </tbody>
+                             <tr style="border: 1px solid balck; background-color: #a4a4a4;">
+                                 <td colspan="5" style="border: 1px solid black; padding-left: 5px;"><strong>Total Quantity: </strong></td>
+                                 <td style="border: 1px solid black; text-align:right; padding-right:5px;"><t t-esc="'{0:,.2f}'.format(tot_qty)"/></td>
+<!--                                  <td></td>-->
+<!--&lt;!&ndash;                                  <td></td>&ndash;&gt;-->
+<!--                                  <td style="border: 1px solid black; text-align:center;">-->
+<!--                                      <t t-esc="'{0:,.2f}'.format(tot_untaxed_amount)"/>-->
+<!--                                  </td>-->
+<!--                                  <td style="border: 1px solid black; text-align:center;">-->
+<!--                                      <t t-esc="'{0:,.2f}'.format(tot_gst_amount)"/>-->
+<!--                                  </td>-->
+<!--                                  <td style="border: 1px solid black; text-align:center;">-->
+<!--                                      <t t-esc="'{0:,.2f}'.format(tot_taxed_amount)"/>-->
+<!--                                  </td>-->
+                             </tr>
+                         </table>
+                         </t>
+
+                     </div>
+
+
+                  </div>
+              </div>
+          </t>
+      </t>
+    </template>
+</odoo>
