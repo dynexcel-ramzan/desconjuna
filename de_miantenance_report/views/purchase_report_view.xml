@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--<record id="view_purchase_report_pivot_inherited" model="ir.ui.view">-->
+         <!--<field name="name">purchase.report.pivot.inherited</field>-->
+        <!--<field name="model">purchase.report</field>-->
+        <!--<field name="inherit_id" ref="purchase.view_purchase_order_pivot"/>-->
+        <!--<field name="arch" type="xml">-->
+            <!--<xpath expr="//field[@name='date_order']" position="before">-->
+                <!--<field name="name" type="row" />-->
+            <!--</xpath>-->
+            <!--<xpath expr="//field[@name='price_total']" position="after">-->
+                <!--<field name="price_unit" type="measure" />-->
+            <!--</xpath>-->
+        <!--</field>-->
+    <!--</record>-->
+
+</odoo>
