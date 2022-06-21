@@ -11,157 +11,113 @@ from odoo.exceptions import UserError
 from odoo.osv.expression import AND, expression
 
 
-
-class PurchaseReport(models.Model):
-    _inherit = "purchase.report"
+class MaintenanceReport(models.Model):
+    _name = "maintenance.report"
+    _description = "Maintenance Report"
+    #     _auto = False
+    #     _rec_name = 'date'
+    #     _order = 'date desc'
 
     name = fields.Char('Order Reference', readonly=True)
-    origin = fields.Char('Source Document', readonly=True)
-    price_unit = fields.Float('Rate', readonly=True)
-    # order_id = fields.Many2one('purchase.order', 'Order #', readonly=True)
+    schedule_start_date = fields.Date(string='Schedule Start Date', readonly=True)
+    schedule_end_date = fields.Date(string='Schedule End Date', readonly=True)
+    start_date = fields.Date(string='Start Date', readonly=True, )
+    end_date = fields.Date(string='End Date', readonly=True, )
+    product_id = fields.Many2one('product.product', 'Product Variant', readonly=True)
+    product_uom = fields.Many2one('uom.uom', 'Unit of Measure', readonly=True)
+    equipment_id = fields.Many2one('maintenance.equipment', string='Equipment', readonly=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', 'Analytic Account', readonly=True)
+    qty_demand = fields.Float('Dmeand', readonly=True)
+    qty_done = fields.Float('Issued', readonly=True)
+    company_id = fields.Many2one('res.company', 'Company', readonly=True)
+    user_id = fields.Many2one('res.users', 'Salesperson', readonly=True)
+    price_total = fields.Float('Total', readonly=True)
+    price_subtotal = fields.Float('Untaxed Total', readonly=True)
+    product_tmpl_id = fields.Many2one('product.template', 'Product', readonly=True)
+    categ_id = fields.Many2one('product.category', 'Product Category', readonly=True)
+    nbr = fields.Integer('# of Lines', readonly=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', 'Analytic Account', readonly=True)
+    state = fields.Selection([
+        ('draft', 'Draft'),
+        ('confirm', 'Confirm'),
+        ('inprocess', 'Under Maintenance'),
+        ('done', 'Done'),
+        ('cancel', 'Cancel'),
+    ], string='Status', readonly=True)
 
-    def init(self):
-        # self._table = sale_report
-        tools.drop_view_if_exists(self.env.cr, self._table)
-        self.env.cr.execute("""CREATE or REPLACE VIEW %s as (
-            %s
-            FROM ( %s )
-            %s
-            )""" % (self._table, self._select(), self._from(), self._group_by()))
+    order_id = fields.Many2one('maintenance.order', 'Order #', readonly=True)
 
-    def _select(self):
-        select_str = """
-            WITH currency_rate as (%s)
-                SELECT
-                    po.id as order_id,
-                    min(l.id) as id,
-                    po.date_order as date_order,
-                    po.state,
-                    po.date_approve,
-                    po.dest_address_id,
-                    po.partner_id as partner_id,
-                    po.name as name,
-                    po.origin as origin,
-                    po.user_id as user_id,
-                    po.company_id as company_id,
-                    po.fiscal_position_id as fiscal_position_id,
-                    l.product_id,
-                    l.price_unit,
-                    p.product_tmpl_id,
-                    t.categ_id as category_id,
-                    po.currency_id,
-                    t.uom_id as product_uom,
-                    extract(epoch from age(po.date_approve,po.date_order))/(24*60*60)::decimal(16,2) as delay,
-                    extract(epoch from age(l.date_planned,po.date_order))/(24*60*60)::decimal(16,2) as delay_pass,
-                    count(*) as nbr_lines,
-                    sum(l.price_total / COALESCE(po.currency_rate, 1.0))::decimal(16,2) as price_total,
-                    (sum(l.product_qty * l.price_unit / COALESCE(po.currency_rate, 1.0))/NULLIF(sum(l.product_qty/line_uom.factor*product_uom.factor),0.0))::decimal(16,2) as price_average,
-                    partner.country_id as country_id,
-                    partner.commercial_partner_id as commercial_partner_id,
-                    analytic_account.id as account_analytic_id,
-                    sum(p.weight * l.product_qty/line_uom.factor*product_uom.factor) as weight,
-                    sum(p.volume * l.product_qty/line_uom.factor*product_uom.factor) as volume,
-                    sum(l.price_subtotal / COALESCE(po.currency_rate, 1.0))::decimal(16,2) as untaxed_total,
-                    sum(l.product_qty / line_uom.factor * product_uom.factor) as qty_ordered,
-                    sum(l.qty_received / line_uom.factor * product_uom.factor) as qty_received,
-                    sum(l.qty_invoiced / line_uom.factor * product_uom.factor) as qty_billed,
-                    case when t.purchase_method = 'purchase' 
-                         then sum(l.product_qty / line_uom.factor * product_uom.factor) - sum(l.qty_invoiced / line_uom.factor * product_uom.factor)
-                         else sum(l.qty_received / line_uom.factor * product_uom.factor) - sum(l.qty_invoiced / line_uom.factor * product_uom.factor)
-                    end as qty_to_be_billed
-        """ % self.env['res.currency']._select_companies_rates()
-        return select_str
-
-    def _from(self):
-        from_str = """
-            purchase_order_line l
-                join purchase_order po on (l.order_id=po.id)
-                join res_partner partner on po.partner_id = partner.id
-                    left join product_product p on (l.product_id=p.id)
-                        left join product_template t on (p.product_tmpl_id=t.id)
-                left join uom_uom line_uom on (line_uom.id=l.product_uom)
-                left join uom_uom product_uom on (product_uom.id=t.uom_id)
-                left join account_analytic_account analytic_account on (l.account_analytic_id = analytic_account.id)
-                left join currency_rate cr on (cr.currency_id = po.currency_id and
-                    cr.company_id = po.company_id and
-                    cr.date_start <= coalesce(po.date_order, now()) and
-                    (cr.date_end is null or cr.date_end > coalesce(po.date_order, now())))
+    def _select_sale(self, fields=None):
+        if not fields:
+            fields = {}
+        select_ = """
+            m.id as order_id,
+            min(ml.id) as id,
+            ml.product_id as product_id,
+            t.uom_id as product_uom,
+            CASE WHEN l.product_id IS NOT NULL THEN sum(l.demand_qty / u.factor * u2.factor) ELSE 0 END as qty_demand,
+            CASE WHEN l.product_id IS NOT NULL THEN sum(l.done_qty / u.factor * u2.factor) ELSE 0 END as qty_done,
+            CASE WHEN l.product_id IS NOT NULL THEN sum(l.price_subtotal / CASE COALESCE(s.currency_rate, 0) WHEN 0 THEN 1.0 ELSE s.currency_rate END) ELSE 0 END as price_subtotal,
+            count(*) as nbr,
+            m.name as name,
+            m.schedule_start_date as schedule_start_date,
+            m.schedule_end_date as schedule_end_date,
+            m.start_date as start_date,
+            m.end_date as end_date,
+            m.state as state,
+            m.user_id as user_id,
+            m.company_id as company_id,
+            m.equipment_id as equipment_id,
+            m.analytic_account_id as analytic_account_id,
+            t.categ_id as categ_id,
+            m.id as order_id
         """
-        return from_str
 
-    def _group_by(self):
-        group_by_str = """
-            GROUP BY
-                po.company_id,
-                po.user_id,
-                po.partner_id,
-                line_uom.factor,
-                po.currency_id,
-                l.price_unit,
-                po.date_approve,
-                l.date_planned,
-                l.product_uom,
-                po.dest_address_id,
-                po.fiscal_position_id,
-                l.product_id,
-                p.product_tmpl_id,
-                t.categ_id,
-                po.date_order,
-                po.state,
-                line_uom.uom_type,
-                line_uom.category_id,
-                t.uom_id,
-                t.purchase_method,
-                line_uom.id,
-                product_uom.factor,
-                partner.country_id,
-                partner.commercial_partner_id,
-                analytic_account.id,
-                po.id
-        """
-        return group_by_str
+        for field in fields.values():
+            select_ += field
+        return select_
 
-    @api.model
-    def read_group(self, domain, fields, groupby, offset=0, limit=None, orderby=False, lazy=True):
-        """ This is a hack to allow us to correctly calculate the average of PO specific date values since
-            the normal report query result will duplicate PO values across its PO lines during joins and
-            lead to incorrect aggregation values.
+    def _from_sale(self, from_clause=''):
+        from_ = """
+                maintenance_order_line ml
+                      right outer join maintenance_order m on (m.id=ml.order_id)
+                        left join product_product p on (ml.product_id=p.id)
+                        left join maintenane_equipment me on (m.equipment_id=me.id)
+                            left join product_template t on (p.product_tmpl_id=t.id)
+                    left join uom_uom u on (u.id=ml.product_uom)
+                    left join uom_uom u2 on (u2.id=t.uom_id)
+                    left join account_analytic_account analytic_account on (m.account_analytic_id = analytic_account.id)
+                %s
+        """ % from_clause
+        return from_
 
-            Only the AVG operator is supported for avg_days_to_purchase.
-        """
-        avg_days_to_purchase = next((field for field in fields if re.search(r'\bavg_days_to_purchase\b', field)), False)
+    def _group_by_sale(self, groupby=''):
+        groupby_ = """
+            ml.product_id,
+            ml.order_id,
+            t.uom_id,
+            t.categ_id,
+            m.name,
+            m.schedule_start_date,
+            m.schedule_end_date,
+            m.start_date,
+            m.end_date,
+            m.user_id,
+            m.state,
+            m.company_id,
+            m.analytic_account_id,
+            m.id %s
+        """ % (groupby)
+        return groupby_
 
-        if avg_days_to_purchase:
-            fields.remove(avg_days_to_purchase)
-            if any(field.split(':')[1].split('(')[0] != 'avg' for field in [avg_days_to_purchase] if field):
-                raise UserError(
-                    "Value: 'avg_days_to_purchase' should only be used to show an average. If you are seeing this message then it is being accessed incorrectly.")
+    def _query(self, with_clause='', fields=None, groupby='', from_clause=''):
+        if not fields:
+            fields = {}
+        with_ = ("WITH %s" % with_clause) if with_clause else ""
+        return '%s (SELECT %s FROM %s WHERE l.display_type IS NULL GROUP BY %s)' % \
+               (with_, self._select_sale(fields), self._from_sale(from_clause), self._group_by_sale(groupby))
 
-        res = []
-        if fields:
-            res = super(PurchaseReport, self).read_group(domain, fields, groupby, offset=offset, limit=limit,
-                                                         orderby=orderby, lazy=lazy)
-
-        if not res and avg_days_to_purchase:
-            res = [{}]
-
-        if avg_days_to_purchase:
-            self.check_access_rights('read')
-            query = """ SELECT AVG(days_to_purchase.po_days_to_purchase)::decimal(16,2) AS avg_days_to_purchase
-                          FROM (
-                              SELECT extract(epoch from age(po.date_approve,po.create_date))/(24*60*60) AS po_days_to_purchase
-                              FROM purchase_order po
-                              WHERE po.id IN (
-                                  SELECT "purchase_report"."order_id" FROM %s WHERE %s)
-                              ) AS days_to_purchase
-                    """
-
-            subdomain = AND([domain, [('company_id', '=', self.env.company.id), ('date_approve', '!=', False)]])
-            subtables, subwhere, subparams = expression(subdomain, self).query.get_sql()
-
-            self.env.cr.execute(query % (subtables, subwhere), subparams)
-            res[0].update({
-                '__count': 1,
-                avg_days_to_purchase.split(':')[0]: self.env.cr.fetchall()[0][0],
-            })
-        return res
+#     def init(self):
+#         # self._table = sale_report
+#         tools.drop_view_if_exists(self.env.cr, self._table)
+#         self.env.cr.execute("""CREATE or REPLACE VIEW %s as (%s)""" % (self._table, self._query()))

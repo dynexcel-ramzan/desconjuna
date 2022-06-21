@@ -13,15 +13,15 @@
     'author': "Dynexcel",
     'website': "http://www.dynexcel.co",
 
-    'category': 'Sales',
-    'version': '12.0.0.',
+    'category': 'Maintenance',
+    'version': '14.0.0.1',
 
     # any module necessary for this one to work correctly
     'depends': ['maintenance'],
 
     # always loaded
     'data': [
-        # 'views/purchase_report_view.xml',
+        'views/purchase_report_view.xml',
         # 'report/sale_gain_report_template.xml',
     ],
 
