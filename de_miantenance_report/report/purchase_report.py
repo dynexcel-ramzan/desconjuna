@@ -82,7 +82,7 @@ class MaintenanceReport(models.Model):
                 maintenance_order_line ml
                       right outer join maintenance_order m on (m.id=ml.order_id)
                         left join product_product p on (ml.product_id=p.id)
-                        left join maintenane_equipment me on (m.equipment_id=me.id)
+                        left join maintenance_equipment me on (m.equipment_id=me.id)
                             left join product_template t on (p.product_tmpl_id=t.id)
                     left join uom_uom u on (u.id=ml.product_uom)
                     left join uom_uom u2 on (u2.id=t.uom_id)
