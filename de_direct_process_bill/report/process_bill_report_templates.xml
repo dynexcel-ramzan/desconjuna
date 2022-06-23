@@ -13,6 +13,12 @@
                         <strong>(Original Bill)</strong>
                       </div>
                     </div>
+
+                    <t t-set="sum_fresh_qty" t-value="0"/>
+                    <t t-set="sum_bgrade_qty" t-value="0"/>
+                    <t t-set="sum_cgrade_qty" t-value="0"/>
+                    <t t-set="sum_tot_invoice_qty" t-value="0"/>
+                    <t t-set="table_index" t-value="0"/>
                     <div class="row" style="margin-top:5px;">
                       <div class="col-8" style="font-size:18px;">
                         <table>
@@ -36,6 +42,7 @@
                         <!--<strong>Bill To Party</strong>-->
                         <!--<p><strong><span t-field="doc.partner_id"/></strong></p>-->
                       </div>
+
                       <div class="col-4">
                         <table>
                           <tr>
@@ -55,23 +62,164 @@
                         </table>
                       </div>
                     </div>
-                    <!--<div class="row" style="margin-top:5px;">-->
-                    <!--  <div class="col-3">-->
-                    <!--    <strong>Sale Order:</strong>-->
-                    <!--    <p class="m-0" t-field="doc.invoice_origin"/>-->
-                    <!--  </div>-->
-                    <!--  <div class="col-3">-->
-                    <!--    <strong>Reference/Description:</strong>-->
-                    <!--    <p class="m-0" t-field="doc.narration"/>-->
-                    <!--  </div>-->
-                    <!--  <div class="col-3">-->
-                    <!--    <t t-foreach="request.env['sale.order'].search([('name','=', doc.invoice_origin)])" t-as="sale_order">-->
-                    <!--      <strong>Party PO:</strong>-->
-                    <!--      <p class="m-0" t-field="sale_order.party_po"/>-->
-                    <!--    </t>-->
-                    <!--  </div>-->
-                    <!--</div>-->
-                    
+
+                    <div class="row" style="margin-top:10px; height:600px;">
+                      <table cellspacing="0" cellpadding="0" class="sm" style="width:100%; height: 600px; table-layout: fixed;">
+                        <thead>
+                          <tr style="border:1px solid black;">
+                            <!--<th style="width:5%; padding: 4px;">Sr#</th>-->
+                            <th style="width:37%; padding: 4px; text-align: center; border-right: 1px solid black;">Description</th>
+                            <th style="width:10%; padding: 4px; text-align: center; border-right: 1px solid black;">Quantity</th>
+                            <th style="width:10%; padding: 4px; text-align: center; border-right: 1px solid black;">Rate<span style="font-size: 10px;">/mtr</span></th>
+                            <!--<th>Taxes</th>-->
+                            <th style="width:10%; padding: 4px; text-align: center; border-right: 1px solid black;">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody style="border:1px solid black;">
+                           <t t-foreach="doc.invoice_line_ids" t-as="line">
+                             <tr>
+                               <td style="width:37%; padding:4px; text-align: left; border-right: 1px solid black; font-size:14.5px;"><t t-esc="line.name"/></td>
+                               <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;">
+                                 <t t-esc="line.quantity" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                 <t t-set="sum_tot_invoice_qty" t-value="sum_tot_invoice_qty + line.quantity"/>
+                                </td>
+                               <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;"><span t-esc="'{0:,.3f}'.format(line.price_unit)"/></td>
+                               <td style="width:10%; padding:4px; text-align: right; border-right: 1px solid black;"><span t-esc="'{0:,.2f}'.format(int(line.price_subtotal))"/></td>
+                             </tr>
+                           </t>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-8" style="margin-left:-12px;">
+                        <table style="width:100%; margin-top:-15px;">
+                          <tbody>
+                            <br/>
+                            <tr>
+                              <td style="width:25%;"><strong>Total Fresh:</strong></td>
+                              <td style="text-align: right;">
+                                <t t-esc="sum_fresh_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <span>mtr</span></td>
+                            </tr>
+                          </tbody>
+
+                        </table>
+                        <table style="width:100%; margin-top:5px;">
+                          <tbody>
+                            <tr>
+                              <td style="width:25%;"><strong>Total B-Grade:</strong></td>
+                              <td style="text-align: right;">
+                                <t t-esc="sum_bgrade_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <span>mtr</span></td>
+                            </tr>
+                          </tbody>
+
+                        </table>
+                        <table style="width:100%; margin-top:5px;">
+                          <tbody>
+                            <tr>
+                              <td style="width:25%;"><strong>Total C-Grade:</strong></td>
+                              <td style="text-align: right;">
+                                <t t-esc="sum_cgrade_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <span>mtr</span></td>
+                            </tr>
+                          </tbody>
+
+                        </table>
+                        <table style="width:100%; margin-top:5px;">
+                          <tbody>
+                            <tr style="border-top:1px solid black;">
+                              <td style="width:25%;"><strong>Total Quantity:</strong></td>
+                              <td style="text-align: right;">
+                                <t t-esc="sum_tot_invoice_qty" t-options="{&quot;widget&quot;: &quot;float&quot;, &quot;precision&quot;: 2}"/>
+                                <span>mtr</span></td>
+                            </tr>
+                          </tbody>
+
+                        </table>
+                         <table style="width:100%; margin-top:10px;">
+                          <tbody>
+                            <tr>
+                              <td style="width:25%;"><strong>Amount in Words:</strong></td>
+                              <td><t t-esc="doc.amt_words"/></td>
+                            </tr>
+                          </tbody>
+
+
+                        </table>
+                      </div>
+                      <div class="col-4" style="float:left; position:relative; border-left: 2px solid black; border-right: 2px solid black; border-bottom: 2px solid black; margin-left: 14px;">
+                        <table class="" style="width:100%;">
+                          <tr style="border-bottom: 1px solid #d9d9d4; margin-top:10px;">
+                            <td style="padding:3px;"><strong>Subtotal</strong></td>
+                            <td class="text-right" style="padding:3px;">
+                                <span t-field="doc.amount_untaxed"/>
+                            </td>
+                          </tr>
+                          <br/>
+                          <tr style="border-bottom: 1px solid #d9d9d4; margin-top:50px;">
+                            <td style="padding:3px;"><strong>Total</strong></td>
+                            <td class="text-right" style="padding:3px;">
+                              <span t-field="doc.amount_total"/>
+                            </td>
+                          </tr>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                          <div class="col-8" style="margin-left:-12px;">
+                            <strong>Greige Details:</strong>
+                            <table style="width:100%;">
+                              <tr>
+                                <td>
+                                  <td style="width:25%;"><strong>Total Greige Used:</strong></td>
+                                  <td><span>______________________ </span><span>mtr</span></td>
+                                </td>
+                              </tr>
+                            </table>
+                          </div>
+                        </div>
+
+                    <!--Check/Approved Signature Section Start-->
+                    <div class="row" style="position:absolute; margin-top:60px;">
+                      <div style="margin-top:10px;">
+                        <div style="float:left; margin-left:10px;">
+                          <span t-field="doc.create_uid.name" style="text-decoration: underline;"/>
+                          <br/>
+                          <div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Prepared By:</strong></div>
+
+                        </div>
+                        <div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Checked By:</strong></div>
+                   	</div>
+                   	<div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Verified By:</strong></div>
+                   	</div>
+                   	<div style="float:left; margin-left: 25px;">
+                  			______________________
+                  			<br/>
+                   	<div class="text-center" style="font-size: 11pt;font-family:Helvetica,Verdana,Arial,sans,Lucida Grande,Calibri;"><strong>Approved By:</strong></div>
+                   	</div>
+
+                      </div>
+                    </div>
+                    <!--Check/Approved Signature Section End-->
+                    <!--Note Section Start-->
+                    <div class="row" style="position:absolute; margin-top:130px;">
+                      <div class="col-12">
+                        <strong style="font-size:12px;">Note:</strong>
+                        <br/>
+                        <p style="font-size:11px;">We are only responsible for any deficiency in your Finish Fabric regarding Fresh &amp; B.C.P percentage &amp; also any other claim/problem untill the fabric laying in our premisis. Please take over your BCP meters wihtin maximum 1 month from the bill date. After that we are not responsible of your BCP meters.</p>
+                      </div>
+                    </div>
+                    <!--Note Section End-->
+
                 </div>
             </t>
         </t>
