@@ -6,15 +6,17 @@
          <field name="model">maintenance.order.report</field>
          <field name="arch" type="xml">
              <pivot string="Maintenance Report" disable_linking="True" sample="1">
-                 <field name="schedule_start_date" interval="month" type="row"/>
+                 <field name="name" type="row"/>
                  <field name="qty_demand" type="measure"/>
                  <field name="qty_done" type="measure"/>
+                 <field name="price_unit" type="measure"/>
+                 <field name="price_subtotal" type="measure"/>
              </pivot>
          </field>
     </record>
 
     <record id="action_maintenacne_report" model="ir.actions.act_window">
-        <field name="name">Maintence Rpeort</field>
+        <field name="name">Maintenance Rpeort</field>
         <field name="res_model">maintenance.order.report</field>
         <field name="view_mode">pivot</field>
         <field name="view_id"></field>  <!-- force empty -->
@@ -24,7 +26,7 @@
     </record>
 
     <menuitem id="menu_report_maintenance"
-            name="Maintenance"
+            name="Maintenance Report"
             action="action_maintenacne_report"
             parent="maintenance.maintenance_reporting"
             sequence="336"/>

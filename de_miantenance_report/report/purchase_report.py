@@ -30,14 +30,15 @@ class MaintenanceOrderReport(models.Model):
     product_id = fields.Many2one('product.product', 'Product Variant', readonly=True)
     product_uom = fields.Many2one('uom.uom', 'Unit of Measure', readonly=True)
     equipment_id = fields.Many2one('maintenance.equipment', string='Equipment', readonly=True)
+    parent_equipment_id = fields.Many2one('maintenance.equipment', string='Parent Equipment', readonly=True)
     analytic_account_id = fields.Many2one('account.analytic.account', 'Analytic Account', readonly=True)
-    qty_demand = fields.Float('Dmeand', readonly=True)
-    qty_done = fields.Float('Issued', readonly=True)
+    qty_demand = fields.Float('Dmeand Qty', readonly=True)
+    qty_done = fields.Float('Issued Qty', readonly=True)
     company_id = fields.Many2one('res.company', 'Company', readonly=True)
     user_id = fields.Many2one('res.users', 'Responsible', readonly=True)
     currency_id = fields.Many2one('res.currency', 'Currency', readonly=True)
-    price_total = fields.Float('Total', readonly=True)
-    price_subtotal = fields.Float('Subtotal', readonly=True)
+#     price_total = fields.Float('Total', readonly=True)
+    price_subtotal = fields.Float('Total', readonly=True)
     price_unit = fields.Float('Cost', readonly=True)
     product_tmpl_id = fields.Many2one('product.template', 'Product', readonly=True)
     categ_id = fields.Many2one('product.category', 'Product Category', readonly=True)
@@ -63,10 +64,11 @@ class MaintenanceOrderReport(models.Model):
             t.uom_id as product_uom,
             CASE WHEN ml.product_id IS NOT NULL THEN sum(ml.demand_qty) ELSE 0 END as qty_demand,
             CASE WHEN ml.product_id IS NOT NULL THEN sum(ml.done_qty) ELSE 0 END as qty_done,
-            CASE WHEN ml.product_id IS NOT NULL THEN sum(standard_price) ELSE 0 END as price_unit,
+            CASE WHEN ml.product_id IS NOT NULL THEN sum(ml.price_subtotal) ELSE 0 END as price_subtotal,
             count(*) as nbr,
             m.name as name,
             ml.currency_id as currency_id,
+            ml.price_unit as price_unit,
             m.schedule_start_date as schedule_start_date,
             m.schedule_end_date as schedule_end_date,
             m.start_date as start_date,
@@ -75,6 +77,7 @@ class MaintenanceOrderReport(models.Model):
             m.user_id as user_id,
             m.company_id as company_id,
             m.equipment_id as equipment_id,
+            m.pfiled as parent_equipment_id,
             analytic_account.id as analytic_account_id,
             p.product_tmpl_id as product_tmpl_id,
             t.categ_id as categ_id,
@@ -118,9 +121,11 @@ class MaintenanceOrderReport(models.Model):
             m.schedule_end_date,
             m.start_date,
             m.end_date,
+            ml.price_unit,
             m.user_id,
             m.state,
             p.product_tmpl_id,
+            m.pfiled,
             t.categ_id,
             m.company_id,
             analytic_account.id,
